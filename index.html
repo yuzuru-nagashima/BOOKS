@@ -5,189 +5,267 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>マイ本棚</title>
   
-  <!-- ④ ホーム画面用アイコン -->
   <link rel="apple-touch-icon" href="https://loosedrawing.com/illust/435/">
   <link rel="icon" href="https://loosedrawing.com/illust/435/">
 
+  <!-- Google Fonts: 高級感のある明朝体と洗練されたサンセリフ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg-color: #f0f6ff;
+      --bg-color: #f8f9fa;
       --card-bg: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --accent: #252422;
+      --border-color: #e5e7eb;
+      --chip-bg: #f3f4f6;
+      --chip-text: #374151;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
       background-color: var(--bg-color);
       color: var(--text-main);
       margin: 0;
-      padding: 20px 12px;
+      padding: 32px 16px;
+      line-height: 1.6;
     }
 
     .container {
-      max-width: 680px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
     header {
-      text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
     }
 
     header h1 {
-      color: var(--primary);
-      margin: 0 0 8px 0;
-      font-size: 1.8rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--accent);
     }
 
-    /* 検索セクション */
-    .search-box {
+    .book-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* 検索 & アクションバー */
+    .control-panel {
       background: var(--card-bg);
       padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
-      margin-bottom: 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      margin-bottom: 28px;
     }
 
-    .input-group {
+    .search-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
 
     input[type="text"], textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
+      font-size: 14px;
+      background-color: #fafafa;
+      color: var(--text-main);
+      transition: all 0.2s ease;
     }
 
     input[type="text"]:focus, textarea:focus {
       outline: none;
-      border-color: var(--primary);
+      background-color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 36, 34, 0.05);
     }
 
     button {
-      background-color: var(--primary);
-      color: white;
+      background-color: var(--accent);
+      color: #ffffff;
       border: none;
-      padding: 10px 16px;
+      padding: 10px 18px;
       border-radius: 8px;
-      font-weight: bold;
-      font-size: 15px;
+      font-weight: 600;
+      font-size: 13px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: opacity 0.2s ease;
+      white-space: nowrap;
     }
 
-    button:active {
-      background-color: var(--primary-hover);
+    button:hover {
+      opacity: 0.88;
     }
 
-    button.secondary {
-      background-color: #94a3b8;
+    button.btn-subtle {
+      background-color: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    button.btn-subtle:hover {
+      background-color: var(--chip-bg);
+      color: var(--text-main);
     }
 
     .search-results {
       margin-top: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .result-item {
-      padding: 10px;
-      background: #f8fafc;
+      padding: 12px;
+      background: #fafafa;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       cursor: pointer;
-      text-align: left;
+      font-size: 13px;
     }
 
     .result-item:hover {
-      background: #eff6ff;
+      background: #f3f4f6;
     }
 
-    /* 本棚リスト */
-    .book-list {
+    .sub-actions {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    /* 書庫グリッド */
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 16px;
     }
 
     .book-card {
       background: var(--card-bg);
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      border-left: 5px solid var(--primary);
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .book-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .book-header {
+      margin-bottom: 12px;
     }
 
     .book-category {
       display: inline-block;
-      background: #e0f2fe;
-      color: #0369a1;
-      font-size: 0.75rem;
-      font-weight: bold;
-      padding: 2px 8px;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
       border-radius: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
     }
 
     .book-title {
-      font-size: 1.2rem;
-      font-weight: bold;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.4;
       margin: 0 0 4px 0;
-      color: var(--primary);
+      color: var(--text-main);
     }
 
     .book-author {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-
-    .book-section-title {
       font-size: 0.8rem;
-      font-weight: bold;
       color: var(--text-muted);
-      margin-top: 8px;
     }
 
-    .book-desc, .book-memo {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin: 4px 0 12px 0;
+    .book-content {
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f3f4f6;
       white-space: pre-wrap;
+    }
+
+    .book-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
     }
 
     .card-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 6px;
+      margin-top: 16px;
     }
 
-    .btn-edit {
-      background-color: #3b82f6;
-      padding: 6px 12px;
-      font-size: 13px;
+    .btn-edit-sm, .btn-delete-sm {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
     }
 
-    .btn-delete {
-      background-color: #ef4444;
-      padding: 6px 12px;
-      font-size: 13px;
+    .btn-edit-sm:hover {
+      color: var(--text-main);
+      background: var(--chip-bg);
+    }
+
+    .btn-delete-sm:hover {
+      color: #ef4444;
+      background: #fef2f2;
     }
 
     /* モーダル */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(17, 24, 39, 0.4);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -202,17 +280,19 @@
     .modal {
       background: white;
       width: 100%;
-      max-width: 500px;
-      border-radius: 12px;
-      padding: 20px;
+      max-width: 480px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
       max-height: 90vh;
       overflow-y: auto;
     }
 
     .modal h2 {
-      margin-top: 0;
-      color: var(--primary);
-      font-size: 1.3rem;
+      margin: 0 0 16px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
     }
 
     .form-group {
@@ -221,8 +301,8 @@
 
     .form-group label {
       display: block;
-      font-size: 0.85rem;
-      font-weight: bold;
+      font-size: 0.75rem;
+      font-weight: 600;
       margin-bottom: 4px;
       color: var(--text-muted);
     }
@@ -232,31 +312,33 @@
 
   <div class="container">
     <header>
-      <h1>📚 マイ本棚</h1>
+      <h1>COLLECTION</h1>
+      <span class="book-count" id="bookCount">0 books</span>
     </header>
 
-    <div class="search-box">
-      <div class="input-group">
-        <input type="text" id="searchInput" placeholder="新しい本や作者を検索...">
+    <div class="control-panel">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="本のタイトルや著者名で追加・検索...">
         <button onclick="searchBooks()">検索</button>
       </div>
       <div id="searchResults" class="search-results"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 12px;">
-        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="resetToDefault()">初期リストに復元</button>
-        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="openConfirmModal('', '', '')">＋ 手動で追加</button>
+      
+      <div class="sub-actions">
+        <button class="btn-subtle" onclick="resetToDefault()">初期データ（232冊）にリセット</button>
+        <button class="btn-subtle" onclick="openConfirmModal('', '', '')">＋ 手動で手入力</button>
       </div>
     </div>
 
-    <div id="bookList" class="book-list"></div>
+    <div id="bookList" class="book-grid"></div>
   </div>
 
-  <!-- 追加・編集用確認モーダル -->
+  <!-- モーダル -->
   <div id="modalOverlay" class="modal-overlay hidden">
     <div class="modal">
-      <h2 id="modalTitle">本棚に追加する</h2>
+      <h2 id="modalTitle">書籍情報を編集</h2>
       <div class="form-group">
         <label>カテゴリー</label>
-        <input type="text" id="modalBookCategory" placeholder="例: 児童文学, 日本文学など">
+        <input type="text" id="modalBookCategory" placeholder="例: 児童文学, 日本文学">
       </div>
       <div class="form-group">
         <label>タイトル</label>
@@ -268,21 +350,20 @@
       </div>
       <div class="form-group">
         <label>あらすじ / 概要</label>
-        <textarea id="modalBookDesc" rows="4"></textarea>
+        <textarea id="modalBookDesc" rows="3"></textarea>
       </div>
       <div class="form-group">
-        <label>自分の感想・メモ</label>
-        <textarea id="modalBookMemo" rows="3" placeholder="感想やメモをここに入力できます..."></textarea>
+        <label>メモ / 感想</label>
+        <textarea id="modalBookMemo" rows="3" placeholder="読書メモや所感を記録..."></textarea>
       </div>
-      <div class="card-actions" style="margin-top: 16px;">
-        <button class="secondary" onclick="closeModal()">キャンセル</button>
-        <button onclick="saveModalData()">保存する</button>
+      <div class="card-actions" style="margin-top: 20px;">
+        <button class="btn-subtle" onclick="closeModal()">キャンセル</button>
+        <button onclick="saveModalData()">保存</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 提供されたリストデータ
     const defaultBooks = [
       // 児童文学
       { category: "児童文学", title: "クルミ割りとネズミの王様", author: "E・T・A・ホフマン" },
@@ -529,7 +610,6 @@
       { category: "その他", title: "インド神話", author: "不詳" }
     ];
 
-    // ローカルストレージになければ初期データをセット
     let books = JSON.parse(localStorage.getItem('my_books') || 'null');
     if (!books) {
       books = defaultBooks;
@@ -537,10 +617,8 @@
     }
 
     let currentEditIndex = null;
-
     renderBooks();
 
-    // 検索機能
     async function searchBooks() {
       const query = document.getElementById('searchInput').value.trim();
       const resultsContainer = document.getElementById('searchResults');
@@ -548,7 +626,7 @@
 
       if (!query) return;
 
-      resultsContainer.innerHTML = '<p style="font-size: 14px; color: #64748b;">検索中...</p>';
+      resultsContainer.innerHTML = '<p style="font-size: 13px; color: #6b7280; padding: 4px;">検索中...</p>';
 
       try {
         const res = await fetch(`https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`);
@@ -557,7 +635,7 @@
 
         resultsContainer.innerHTML = '';
         if (results.length === 0) {
-          resultsContainer.innerHTML = '<p style="font-size: 14px; color: #64748b;">見つかりませんでした。</p>';
+          resultsContainer.innerHTML = '<p style="font-size: 13px; color: #6b7280; padding: 4px;">該当する本が見つかりませんでした。</p>';
           return;
         }
 
@@ -565,7 +643,7 @@
           const div = document.createElement('div');
           div.className = 'result-item';
           const cleanSnippet = item.snippet.replace(/<[^>]*>?/gm, '');
-          div.innerHTML = `<strong>${item.title}</strong><br><small style="color:#64748b;">${cleanSnippet.substring(0, 50)}...</small>`;
+          div.innerHTML = `<strong>${item.title}</strong><br><span style="color:#6b7280;">${cleanSnippet.substring(0, 45)}...</span>`;
           
           div.onclick = () => {
             resultsContainer.innerHTML = '';
@@ -575,14 +653,13 @@
           resultsContainer.appendChild(div);
         });
       } catch (e) {
-        resultsContainer.innerHTML = '<p style="font-size: 14px; color: red;">エラーが発生しました。</p>';
+        resultsContainer.innerHTML = '<p style="font-size: 13px; color: #ef4444; padding: 4px;">検索エラーが発生しました。</p>';
       }
     }
 
-    // モーダル操作
-    function openConfirmModal(title = '', author = '', desc = '', memo = '', category = '新規追加', index = null) {
+    function openConfirmModal(title = '', author = '', desc = '', memo = '', category = '一般', index = null) {
       currentEditIndex = index;
-      document.getElementById('modalTitle').textContent = index === null ? 'この内容で本棚に追加しますか？' : '本を編集';
+      document.getElementById('modalTitle').textContent = index === null ? '新規追加' : '書籍情報を編集';
       document.getElementById('modalBookCategory').value = category;
       document.getElementById('modalBookTitle').value = title;
       document.getElementById('modalBookAuthor').value = author;
@@ -604,7 +681,7 @@
       const memo = document.getElementById('modalBookMemo').value.trim();
 
       if (!title) {
-        alert('タイトルを入力してください');
+        alert('タイトルは必須です');
         return;
       }
 
@@ -626,14 +703,14 @@
     }
 
     function deleteBook(index) {
-      if (confirm('この本を本棚から削除しますか？')) {
+      if (confirm('この本を削除しますか？')) {
         books.splice(index, 1);
         saveAndRender();
       }
     }
 
     function resetToDefault() {
-      if (confirm('初期のリスト（232冊）の状態に戻しますか？（自分で追加・編集した内容もリセットされます）')) {
+      if (confirm('初期リスト（232冊）にリセットしますか？')) {
         books = defaultBooks;
         saveAndRender();
       }
@@ -646,10 +723,12 @@
 
     function renderBooks() {
       const container = document.getElementById('bookList');
+      const countEl = document.getElementById('bookCount');
       container.innerHTML = '';
+      countEl.textContent = `${books.length} books`;
 
       if (books.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#64748b; margin-top:32px;">本棚は空です。</p>';
+        container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#9ca3af; padding: 40px 0;">登録されている本はありません。</p>';
         return;
       }
 
@@ -657,14 +736,18 @@
         const card = document.createElement('div');
         card.className = 'book-card';
         card.innerHTML = `
-          ${b.category ? `<span class="book-category">${escapeHtml(b.category)}</span>` : ''}
-          <div class="book-title">${escapeHtml(b.title)}</div>
-          <div class="book-author">${escapeHtml(b.author || '著者不明')}</div>
-          ${b.desc ? `<div class="book-section-title">あらすじ・概要</div><div class="book-desc">${escapeHtml(b.desc)}</div>` : ''}
-          ${b.memo ? `<div class="book-section-title">感想・メモ</div><div class="book-memo">${escapeHtml(b.memo)}</div>` : ''}
+          <div>
+            <div class="book-header">
+              ${b.category ? `<span class="book-category">${escapeHtml(b.category)}</span>` : ''}
+              <h2 class="book-title">${escapeHtml(b.title)}</h2>
+              <div class="book-author">${escapeHtml(b.author || '著者不明')}</div>
+            </div>
+            ${b.desc ? `<div class="book-content"><div class="book-label">Overview</div>${escapeHtml(b.desc)}</div>` : ''}
+            ${b.memo ? `<div class="book-content"><div class="book-label">Note</div>${escapeHtml(b.memo)}</div>` : ''}
+          </div>
           <div class="card-actions">
-            <button class="btn-edit" onclick="editBook(${index})">編集</button>
-            <button class="btn-delete" onclick="deleteBook(${index})">削除</button>
+            <button class="btn-edit-sm" onclick="editBook(${index})">編集</button>
+            <button class="btn-delete-sm" onclick="deleteBook(${index})">削除</button>
           </div>
         `;
         container.appendChild(card);
