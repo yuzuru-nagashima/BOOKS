@@ -2,686 +2,411 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>読書記録</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイ本棚</title>
   
-  <!-- iOS Safari ホーム画面追加（PWA）用設定 -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="読書記録">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2232/2232688.png">
+  <!-- ④ ホーム画面用アイコンの設定 -->
+  <link rel="apple-touch-icon" href="https://loosedrawing.com/illust/435/">
+  <link rel="icon" href="https://loosedrawing.com/illust/435/">
 
   <style>
     :root {
-      --primary: #4a6741;
-      --bg: #f7f6f2;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f0f6ff;
       --card-bg: #ffffff;
-      --text: #2c3e50;
-      --border: #e0ddd5;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
     }
 
     body {
-      background-color: var(--bg);
-      color: var(--text);
-      padding-bottom: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 20px 12px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
     }
 
     header {
-      background-color: var(--primary);
-      color: white;
-      padding: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      margin-bottom: 24px;
     }
 
     header h1 {
-      font-size: 1.2rem;
-      text-align: center;
-      margin-bottom: 12px;
+      color: var(--primary);
+      margin: 0 0 8px 0;
+      font-size: 1.8rem;
     }
 
+    /* 検索セクション */
     .search-box {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+      margin-bottom: 20px;
+    }
+
+    .input-group {
       display: flex;
       gap: 8px;
     }
 
-    .search-box input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-
-    .add-form-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-    }
-
-    .add-form-card h2 {
-      font-size: 1rem;
-      margin-bottom: 12px;
-      color: var(--primary);
-    }
-
-    .form-group {
-      margin-bottom: 10px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      color: #666;
-      margin-bottom: 4px;
-    }
-
-    .form-group input, .form-group select {
+    input[type="text"], textarea {
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.9rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
     }
 
-    .btn {
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    button {
       background-color: var(--primary);
       color: white;
       border: none;
       padding: 10px 16px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: bold;
-      width: 100%;
+      font-size: 15px;
       cursor: pointer;
-      font-size: 0.9rem;
+      transition: background-color 0.2s;
     }
 
-    .btn:disabled {
-      opacity: 0.6;
+    button:active {
+      background-color: var(--primary-hover);
     }
 
-    .category-section {
-      margin-bottom: 24px;
+    button.secondary {
+      background-color: #94a3b8;
     }
 
-    .category-header {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 4px;
-      margin-bottom: 12px;
+    /* 候補リスト */
+    .search-results {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .result-item {
+      padding: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .result-item:hover {
+      background: #eff6ff;
+    }
+
+    /* 本棚リスト */
+    .book-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .book-card {
       background: var(--card-bg);
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-left: 5px solid var(--primary);
     }
 
     .book-title {
-      font-size: 1rem;
+      font-size: 1.2rem;
       font-weight: bold;
-      margin-bottom: 2px;
+      margin: 0 0 4px 0;
+      color: var(--primary);
     }
 
     .book-author {
-      font-size: 0.85rem;
-      color: #666;
-      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
     }
 
-    .book-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 8px;
-    }
-
-    .tab-btn {
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      color: #777;
-    }
-
-    .tab-btn.active {
-      border-bottom-color: var(--primary);
-      color: var(--primary);
-      font-weight: bold;
-    }
-
-    .tab-content {
-      display: none;
-      font-size: 0.85rem;
-      line-height: 1.4;
-      color: #444;
-      min-height: 36px;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .memo-textarea {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px;
-      font-size: 0.85rem;
-      resize: vertical;
-      min-height: 50px;
-    }
-
-    .loading {
-      text-align: center;
+    .book-section-title {
       font-size: 0.8rem;
-      color: #888;
-      margin-top: 4px;
+      font-weight: bold;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .book-desc, .book-memo {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin: 4px 0 12px 0;
+      white-space: pre-wrap;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-edit {
+      background-color: #3b82f6;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-delete {
+      background-color: #ef4444;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    /* モーダル (ポップアップ) */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal {
+      background: white;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      color: var(--primary);
+      font-size: 1.3rem;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>読書記録</h1>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="タイトルまたは作者で検索..." oninput="handleSearch()">
-    </div>
-  </header>
-
   <div class="container">
-    <!-- 新規追加フォーム -->
-    <div class="add-form-card">
-      <h2>＋ 新しい本を追加登録</h2>
-      <div class="form-group">
-        <label>カテゴリー</label>
-        <select id="newCategory">
-          <option value="児童文学">児童文学</option>
-          <option value="日本文学" selected>日本文学</option>
-          <option value="海外文学">海外文学</option>
-          <option value="洋書">洋書</option>
-          <option value="新書・実用書">新書・実用書</option>
-          <option value="その他">その他</option>
-        </select>
+    <header>
+      <h1>📚 マイ本棚</h1>
+    </header>
+
+    <!-- 検索/手動追加エリア -->
+    <div class="search-box">
+      <div class="input-group">
+        <input type="text" id="searchInput" placeholder="本や作者のタイトルを入力...">
+        <button onclick="searchBooks()">検索</button>
       </div>
+      <div id="searchResults" class="search-results"></div>
+      <div style="text-align: right; margin-top: 8px;">
+        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="openConfirmModal('', '', '')">手動で本を追加</button>
+      </div>
+    </div>
+
+    <!-- 本一覧 -->
+    <div id="bookList" class="book-list"></div>
+  </div>
+
+  <!-- ③＆② 追加・編集用確認モーダル -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h2 id="modalTitle">本棚に追加する</h2>
       <div class="form-group">
         <label>タイトル</label>
-        <input type="text" id="newTitle" placeholder="例: こころ">
+        <input type="text" id="modalBookTitle">
       </div>
-      <button class="btn" id="addBtn" onclick="addNewBook()">自動検索して追加</button>
-      <div id="statusMsg" class="loading"></div>
+      <div class="form-group">
+        <label>著者 / 作者</label>
+        <input type="text" id="modalBookAuthor">
+      </div>
+      <div class="form-group">
+        <label>あらすじ / 概要</label>
+        <textarea id="modalBookDesc" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label>自分の感想・メモ</label>
+        <textarea id="modalBookMemo" rows="3" placeholder="感想やメモをここに入力できます..."></textarea>
+      </div>
+      <div class="card-actions" style="margin-top: 16px;">
+        <button class="secondary" onclick="closeModal()">キャンセル</button>
+        <button onclick="saveModalData()">保存する</button>
+      </div>
     </div>
-
-    <!-- 本棚リスト表示エリア -->
-    <div id="booksContainer"></div>
   </div>
 
   <script>
-    // ① 初期データ (Word文書を準拠して整列済み)
-    const initialBooks = [
-      // 児童文学
-      { id: "1", category: "児童文学", title: "クルミ割りとネズミの王様", author: "E・T・A・ホフマン", year: 1816, summary: "少女マリーがクリスマスの夜に貰ったクルミ割り人形が動き出し、ネズミの王様と戦う幻想物語。", memo: "" },
-      { id: "2", category: "児童文学", title: "ハイジ", author: "ヨハンナ・シュピリ", year: 1880, summary: "アルプスの豊かな自然の中でたくましく育つ少女ハイジと周囲の人々の愛を描いた名作。", memo: "" },
-      { id: "3", category: "児童文学", title: "宝島", author: "ロバート・ルイス・スティーヴンソン", year: 1883, summary: "少年ジムが海賊の宝の地図を手に、冒険の旅へと乗り出すワクワクあふれる海洋冒険譚。", memo: "" },
-      { id: "4", category: "児童文学", title: "十五少年漂流記", author: "ジュール・ヴェルヌ", year: 1888, summary: "無人島に漂着した15人の少年たちが知恵と勇気を振り絞って生き抜くサバイバル名作。", memo: "" },
-      { id: "5", category: "児童文学", title: "オズの魔法使い", author: "L・フランク・ボーム", year: 1900, summary: "竜巻で魔法の国へ飛ばされた少女ドロシーが、仲間とともにオズの魔法使いを訪ねる旅。", memo: "" },
-      { id: "6", category: "児童文学", title: "ピーターラビットのおはなし", author: "ビアトリクス・ポター", year: 1902, summary: "いたずら好きなうさぎのピーターがマグレガーさんの畑に忍び込むかわいらしくもスリリングな物語。", memo: "" },
-      { id: "7", category: "児童文学", title: "グロースターの仕立て屋", author: "ビアトリクス・ポター", year: 1903, summary: "病気の仕立て屋に代わり、親切なネズミたちが美しい服を作り上げるクリスマスの奇跡。", memo: "" },
-      { id: "8", category: "児童文学", title: "ベンジャミンバニーのおはなし", author: "ビアトリクス・ポター", year: 1904, summary: "ピーターラビットといとこのベンジャミンが再びマグレガーさんの畑へ上着を取りに行く冒険。", memo: "" },
-      { id: "9", category: "児童文学", title: "フロプシーのこどもたち", author: "ビアトリクス・ポター", year: 1909, summary: "ベンジャミンの子どもたちがマグレガーさんに捕まりそうになるピンチを描いた絵本。", memo: "" },
-      { id: "10", category: "児童文学", title: "カルアシチミーのおはなし", author: "ビアトリクス・ポター", year: 1911, summary: "木の実を蓄える親切な灰色のりす・チミーの心温まる物語。", memo: "" },
-      { id: "11", category: "児童文学", title: "秘密の花園", author: "フランシス・ホジソン・バーネット", year: 1911, summary: "気難しい少女メアリーが閉ざされた庭園を再生させながら心をひらいていく感動のストーリー。", memo: "" },
-      { id: "12", category: "児童文学", title: "注文の多い料理店", author: "宮沢賢治", year: 1924, summary: "山奥の不思議なレストランに入った2人の若い紳士が、逆に食べられそうになる童話。", memo: "" },
-      { id: "13", category: "児童文学", title: "銀河鉄道の夜", author: "宮沢賢治", year: 1927, summary: "少年ジョバンニが親友カムパネルラとともに夜空を走る銀河鉄道に乗って旅をする幻想的な名作。", memo: "" },
-      { id: "14", category: "児童文学", title: "クマのプーさん", author: "A・A・ミルン", year: 1926, summary: "食いしん坊のくまのプーさんと100エーカーの森の仲間たちの日常を描いたユーモア溢れる童話。", memo: "" },
-      { id: "15", category: "児童文学", title: "エーミールと探偵たち", author: "エーリヒ・ケストナー", year: 1929, summary: "お金をすられた少年エーミールが街の子供たちと協力して犯人を追い詰める児童ミステリー。", memo: "" },
-      { id: "16", category: "児童文学", title: "二人のロッテ", author: "エーリヒ・ケストナー", year: 1949, summary: "林間学校で偶然出会った瓜二つの少女たちが、生き別れの双子だと気づき親の再婚を計画する物語。", memo: "" },
-      { id: "17", category: "児童文学", title: "ツバメ号とアマゾン号", author: "アーサー・ランサム", year: 1930, summary: "湖水地方でヨットを楽しむ子供たちが結成した「ツバメ号」と「アマゾン号」の素晴らしい夏休みの冒険。", memo: "" },
-      { id: "18", category: "児童文学", title: "大きな森の小さな家", author: "ローラ・インガルス・ワイルダー", year: 1932, summary: "ウィスコンシンの大自然の中でたくましく心豊かに生きるインガルス一家の開拓生活記録。", memo: "" },
-      { id: "19", category: "児童文学", title: "小さい牛追い", author: "マリー・ハムズン", year: 1933, summary: "ノルウェーの豊かな自然の中、牛追いとして働く子どもたちの生き生きとした素朴な暮らし。", memo: "" },
-      { id: "20", category: "児童文学", title: "牛追いの冬", author: "マリー・ハムズン", year: 1934, summary: "厳しい冬を迎えたノルウェーの農場で助け合いながら温かく過ごす子どもたちの成長記録。", memo: "" },
-      { id: "21", category: "児童文学", title: "君たちはどう生きるか", author: "吉野源三郎", year: 1937, summary: "中学生のコペル君が日常の疑問を通して叔父さんと対話し、生き方や社会の仕組みを深く考える物語。", memo: "" },
-      { id: "22", category: "児童文学", title: "ホビットの冒険", author: "J・R・R・トールキン", year: 1937, summary: "穏やかに暮らしていたホビット族のビルボが、竜に奪われた宝を取り戻す旅に出る壮大なファンタジー。", memo: "" },
-      { id: "23", category: "児童文学", title: "名探偵カッレくん", author: "アストリッド・リンドグレーン", year: 1946, summary: "探偵に憧れる少年カッレが仲間たちとともに本物の事件を解決しようと奮闘する冒険劇。", memo: "" },
-      { id: "24", category: "児童文学", title: "エルマーのぼうけん", author: "ルース・スタイルス・ガネット", year: 1948, summary: "勇敢な少年エルマーが捕らえられた竜の子を助けるため、知恵をしぼってどうぶつ島へ向かう物語。", memo: "" },
-      { id: "25", category: "児童文学", title: "ライオンと魔女", author: "C・S_ルイス", year: 1950, summary: "衣装タンスの奥から繋がる魔法の国ナルニアで、4人兄弟が偉大なライオン・アスランと白い魔女に立ち向かう。", memo: "" },
-      { id: "26", category: "児童文学", title: "カスピアン王子のつのぶえ", author: "C・S_ルイス", year: 1951, summary: "邪悪な叔父から国を取り戻そうとするカスピアン王子を助けるため、4人兄弟が再びナルニアへ飛び立つ。", memo: "" },
-      { id: "27", category: "児童文学", title: "朝びらき丸 東の海へ", author: "C・S_ルイス", year: 1952, summary: "カスピアン王子の船「朝びらき丸」に乗り込み、世界の東の果てを目指して数々の島を旅する冒険物語。", memo: "" },
-      { id: "28", category: "児童文学", title: "銀のいす", author: "C・S_ルイス", year: 1953, summary: "行方不明になったナルニアの王子を探すため、ユースタスとジルが地下の不気味な王国へと向かう。", memo: "" },
-      { id: "29", category: "児童文学", title: "馬と少年", author: "C・S_ルイス", year: 1954, summary: "しゃべる馬ブレアとともに奴隷の身分から逃げ出した少年シャスタが、ナルニアを目指す旅。", memo: "" },
-      { id: "30", category: "児童文学", title: "魔術師のおい", author: "C・S_ルイス", year: 1955, summary: "ナルニア国の創世が明かされる。少年ディゴリーと少女ポリーが魔法の指輪で異世界を旅する。", memo: "" },
-      { id: "31", category: "児童文学", title: "さいごの戦い", author: "C・S_ルイス", year: 1956, summary: "偽のアスランが現れ混乱するナルニア。最後の王チリアンとともにナルニアの終焉と新たな始まりを描く。", memo: "" },
-      { id: "32", category: "児童文学", title: "夜光人間", author: "江戸川乱歩", year: 1958, summary: "暗闇で怪しく光る恐怖の夜光人間が現れる！少年探偵団と名探偵・明智小五郎が立ち向かう名作ミステリー。", memo: "" },
-      { id: "33", category: "児童文学", title: "くまのパディントン", author: "マイケル・ボンド", year: 1958, summary: "ペルーからロンドンへやってきた紳士的でおちゃめなクマ、パディントンが巻き起こす騒動と温かい日常。", memo: "" },
-      { id: "34", category: "児童文学", title: "パディントンの一周年記念", author: "マイケル・ボンド", year: 1959, summary: "ブラウン家に来て1年を迎えたパディントンが、相変わらず失敗しながらもみんなに愛される日常。", memo: "" },
-      { id: "35", category: "児童文学", title: "パディントンの妙技公開", author: "マイケル・ボンド", year: 1960, summary: "オークションに参加したりDIYに挑戦したりと、色々なことに体当たりで挑戦するパディントン。", memo: "" },
-      { id: "36", category: "児童文学", title: "パディントンのクリスマス", author: "マイケル・ボンド", year: 1961, summary: "デパートのサンタクロースに会いに行ったり、クリスマス準備で大活躍（？）するパディントン。", memo: "" },
-      { id: "37", category: "児童文学", title: "チョコレート工場の秘密", author: "ロアルド・ダール", year: 1964, summary: "貧しい少年チャーリーがゴールデンチケットを引き当て、黄金のチョコレート工場へ招待される夢物語。", memo: "" },
-      { id: "38", category: "児童文学", title: "くまのコールテンくん", author: "ドン・フリーマン", year: 1968, summary: "デパートの棚で自分を買ってくれる人を待っているズボンのボタンがとれたくまのぬいぐるみのお話。", memo: "" },
-      { id: "39", category: "児童文学", title: "モモ", author: "ミヒャエル・エンデ", year: 1973, summary: "「時間どろぼう」から奪われたみんなの時間を取り戻すため、不思議な少女モモが立ち上がる不朽の名作。", memo: "" },
-      { id: "40", category: "児童文学", title: "こまったさん", author: "寺村輝夫", year: 1982, summary: "口ぐせが「こまった」のお料理大好きなこまったさんが、不思議な世界でおいしい料理を作るシリーズ。", memo: "" },
-      { id: "41", category: "児童文学", title: "わかったさん", author: "寺村輝夫", year: 1987, summary: "「わかった！」が口ぐせのお菓子作りが大好きなわかったさんが、お菓子作りの冒険に出かける大人気童話。", memo: "" },
-      { id: "42", category: "児童文学", title: "魔女の宅急便", author: "角野栄子", year: 1985, summary: "13歳の魔女キキが相棒の黒猫ジジとともに新しい街で空飛ぶ宅急便屋を開き、大人へと成長していく。", memo: "" },
-      { id: "43", category: "児童文学", title: "かいけつゾロリ", author: "原ゆたか", year: 1987, summary: "いたずらの王者を目指す狐のゾロリと子分のイシシ・ノシシが繰り広げる笑いと冒険がいっぱいの物語。", memo: "" },
-      { id: "44", category: "児童文学", title: "アーモンドチョコレート入りのワルツ", author: "森絵都", year: 1996, summary: "ピアノやシューカツなど繊細な青春期に揺れる少年少女たちの心の機微を瑞々しく描いた短編集。", memo: "" },
-      { id: "45", category: "児童文学", title: "カラフル", author: "森絵都", year: 1998, summary: "死んだはずの「僕」が他人の体にホームステイし、自分の過ちや生きることの意味を再発見していく物語。", memo: "" },
-      { id: "46", category: "児童文学", title: "夏の庭―The Friends―", author: "湯本香樹実", year: 1992, summary: "「人が死ぬ瞬間」を見ようとおじいさんを観察し始めた3人の少年たちが、本当の絆を深めていく名作。", memo: "" },
-      { id: "47", category: "児童文学", title: "あらしのよるに", author: "木村裕一", year: 1994, summary: "真っ暗な小屋で嵐の夜に出会ったオオカミとヤギ。天敵同士でありながら秘密の友情を結ぶロングセラー。", memo: "" },
-      { id: "48", category: "児童文学", title: "西の魔女が死んだ", author: "梨木香歩", year: 1994, summary: "学校に行けなくなった少女まいが、イギリス人の祖母「西の魔女」のもとで生きる知恵と魔法を学ぶ物語。", memo: "" },
-      { id: "49", category: "児童文学", title: "名探偵夢水清志郎事件ノート", author: "はやみねかおる", year: 1994, summary: "自称名探偵の夢水清志郎が、隣に住む三姉妹とともに数々の不可能犯罪を鮮やかに解き明かすミステリー。", memo: "" },
-      { id: "50", category: "児童文学", title: "守り人", author: "上橋菜穂子", year: 1996, summary: "短槍使いの女用心棒バルサが、精霊の卵を宿した幼い第2王子チャグムを守るため命を懸けて戦う和製ファンタジー。", memo: "" },
-      { id: "51", category: "児童文学", title: "獣の奏者", author: "上橋菜穂子", year: 2006, summary: "危険な聖獣・王獣と心を通わせることができる少女エリンの、運命に翻弄される壮大な一生を描く。", memo: "" },
-      { id: "52", category: "児童文学", title: "鬼の橋", author: "伊藤遊", year: 1998, summary: "平安時代を舞台に、小野篁（おののたかむら）の少年時代を描いた異色で重厚なファンタジー時代劇。", memo: "" },
-      { id: "53", category: "児童文学", title: "くちぶえ番長", author: "重松清", year: 2001, summary: "転校生の一本気な少女ツヨシと気弱なボク。くちぶえが得意な「番長」との友情を描いた爽やかな青春小説。", memo: "" },
-      { id: "54", category: "児童文学", title: "小学五年生", author: "重松清", year: 2007, summary: "子供でも大人でもない11歳という繊細な時期を迎えた小学5年生たちの葛藤と成長を描いた短編小説集。", memo: "" },
-      { id: "55", category: "児童文学", title: "ブレイブ・ストーリー", author: "宮部みゆき", year: 2003, summary: "崩壊した家庭を取り戻すため、少年亘（ワタル）が運命を変えるべく幻界（ヴィジョン）へ旅立つ大長編。", memo: "" },
+    let books = JSON.parse(localStorage.getItem('my_books') || '[]');
+    let currentEditIndex = null; // 編集中のインデックス (nullの場合は新規)
 
-      // 日本文学
-      { id: "56", category: "日本文学", title: "自転車日記", author: "夏目漱石", year: 1902, summary: "ロンドン留学中に自転車の練習に励む漱石が、転んでは起き上がる日常をユーモアたっぷりに綴ったエッセイ。", memo: "" },
-      { id: "57", category: "日本文学", title: "こころ", author: "夏目漱石", year: 1914, summary: "「私」と「先生」、そして「K」を巡るエゴイズムと罪悪感、人間の心の奥底を描いた近代日本文学の最高峰。", memo: "" },
-      { id: "58", category: "日本文学", title: "山椒大夫", author: "森鴎外", year: 1915, summary: "人買いに売られ人道に反する残酷な過酷な環境に置かれた厨子王と安寿の悲しくも美しい兄弟愛の物語。", memo: "" },
-      { id: "59", category: "日本文学", title: "高瀬舟", author: "森鴎外", year: 1916, summary: "護送される罪人喜助と奉行・同心との対話を通じ、安楽死や知足の心について問いかける名作短編。", memo: "" },
-      { id: "60", category: "日本文学", title: "羅生門", author: "芥川龍之介", year: 1915, summary: "荒廃した平安の都で生き延びるため、老婆の着物を剥ぎ取って悪人となる男の葛藤を描いた短編。", memo: "" },
-      { id: "61", category: "日本文学", title: "形", author: "菊池寛", year: 1921, summary: "形（装束）の威圧感によって敵を圧倒していた武士が、形を他人に貸した途端にあっけなく討たれてしまう皮肉。", memo: "" },
-      { id: "62", category: "日本文学", title: "城の崎にて", author: "志賀直哉", year: 1917, summary: "怪我の湯治のために訪れた城崎温泉で、蜂や鼠、蜂などの生死を観察しながら生への実感を探る志賀直哉の代表作。", memo: "" },
-      { id: "63", category: "日本文学", title: "ラムネ氏のこと", author: "谷崎潤一郎", year: 1925, summary: "日常のこだわりや人間観察を独自の美意識とユーモアで鋭く切り取った谷崎流のエッセイ短編。", memo: "" },
-      { id: "64", category: "日本文学", title: "走れメロス", author: "太宰治", year: 1940, summary: "邪悪な王に立ち向かったメロスが、捕らわれた親友セリヌンティウスを救うため決死の覚悟で走る友情の物語。", memo: "" },
-      { id: "65", category: "日本文学", title: "山月記", author: "中島敦", year: 1942, summary: "高慢な自尊心と切実な羞恥心ゆえに人喰い虎へと変身してしまった詩人・李徴の悲しき哀歌。", memo: "" },
-      { id: "66", category: "日本文学", title: "ゼロの焦点", author: "松本清張", year: 1959, summary: "新婚早々に北陸で失踪した夫。残された妻・禎子が夫の知られざる過去と連続殺人の謎を追う社会派ミステリー。", memo: "" },
-      { id: "67", category: "日本文学", title: "砂の女", author: "安部公房", year: 1962, summary: "昆虫採集に出かけた男が、砂丘の底に埋もれた家で一人暮らす女に閉じ込められ脱出を図る安部公房の傑作。", memo: "" },
-      { id: "68", category: "日本文学", title: "父の詫び状", author: "向田邦子", year: 1978, summary: "昭和の頑固だが愛すべき父親の姿と、自身の少女時代の思い出を味わい深くあたたかに描いた名作エッセイ。", memo: "" },
-      { id: "69", category: "日本文学", title: "不忠臣蔵", author: "井上ひさし", year: 1985, summary: "赤穂浪士の四十七士に入り損ねた「不忠者」たちの視点から忠臣蔵の裏側をユーモラスに描く新釈時代劇。", memo: "" },
-      { id: "70", category: "日本文学", title: "十角館の殺人", author: "綾辻行人", year: 1987, summary: "孤島に建つ十角形の館を訪れたミステリー研究会のメンバーが一人また一人と殺されていく本格新本格の金字塔。", memo: "" },
-      { id: "71", category: "日本文学", title: "迷路館の殺人", author: "綾辻行人", year: 1988, summary: "地下に広がる迷路状の館に招かれたミステリー作家たちが、仕掛けられた殺人劇に巻き込まれていく。", memo: "" },
-      { id: "72", category: "日本文学", title: "99％の誘拐", author: "岡嶋二人", year: 1988, summary: "ハイテクIT技術を極限まで駆使した完璧な誘拐計画。親から子へ引き継がれた復讐の劇的ミステリー。", memo: "" },
-      { id: "73", category: "日本文学", title: "残像に口紅を", author: "筒井康隆", year: 1989, summary: "「あ」が消えると「あ」を含む言葉が世界から消滅する。言葉が一つずつ失われる中で書かれた実験的虚構小説。", memo: "" },
-      { id: "74", category: "日本文学", title: "殺人現場は雲の上", author: "東野圭吾", year: 1989, summary: "スチュワーデスコンビのA子とB子が、フライト先や機内で遭遇する事件をコミカルに解決していくライトミステリー。", memo: "" },
-      { id: "75", category: "日本文学", title: "変身", author: "東野圭吾", year: 1991, summary: "頭部に銃弾を受け、世界初の脳移植手術を受けた青年。だが、彼の性格は次第に凶暴な別人へと変貌していく。", memo: "" },
-      { id: "76", category: "日本文学", title: "容疑者Xの献身", author: "東野圭吾", year: 2005, summary: "天才数学者・石神が愛する女性のために構築した完璧なトリック。ガリレオ・湯川学との切ない知恵比べ。", memo: "" },
-      { id: "77", category: "日本文学", title: "新参者", author: "東野圭吾", year: 2009, summary: "日本橋人形町で起きた殺人事件。着任したばかりの刑事・加賀恭一郎が人々の嘘を解き明かし真相へ迫る。", memo: "" },
-      { id: "78", category: "日本文学", title: "真夏の方程式", author: "東野圭吾", year: 2011, summary: "美しい海辺の町で起きた元警察官の不審死。ガリレオ湯川が環境保護活動の裏に潜む哀しい秘密を明かす。", memo: "" },
-      { id: "79", category: "日本文学", title: "ナミヤ雑貨店の奇蹟", author: "東野圭吾", year: 2012, summary: "古い雑貨店に投げ込まれる悩み相談の手紙。時を超えてつながる人々と奇跡を描く心温まる感動作。", memo: "" },
-      { id: "80", category: "日本文学", title: "禁断の魔術", author: "東野圭吾", year: 2015, summary: "弟子の青年が科学の力を復讐に使おうとするとき、湯川学は自らの「科学者としての倫理」を賭けて立ちはだかる。", memo: "" },
-      { id: "81", category: "日本文学", title: "沈黙のパレード", author: "東野圭吾", year: 2018, summary: "町で愛されていた少女が殺害された。容疑者は沈黙を貫き釈放。秋のパレードの日に起きた沈黙の復讐劇。", memo: "" },
-      { id: "82", category: "日本文学", title: "長い長い殺人", author: "宮部みゆき", year: 1992, summary: "事件に関わった様々な登場人物の「財布」たちが語り手となり、連続保険金殺人事件を解き明かす異色作。", memo: "" },
-      { id: "83", category: "日本文学", title: "ステップファザー・ステップ", author: "宮部みゆき", year: 1993, summary: "中学生の双子の家に落雷とともに落ちてきたプロの泥棒。彼らはなんと「お父さん」として同居を始める！", memo: "" },
-      { id: "84", category: "日本文学", title: "理由", author: "宮部みゆき", year: 1998, summary: "超高層マンションで起きた4人家族殺害事件。被害者と加害者の人生をドキュメンタリー手法で炙り出す最高峰。", memo: "" },
-      { id: "85", category: "日本文学", title: "模倣犯", author: "宮部みゆき", year: 2001, summary: "公園で発見された女性の右腕。劇場型犯罪で社会を恐怖に陥れる犯人と、巻き込まれた遺族たちの壮絶なドラマ。", memo: "" },
-      { id: "86", category: "日本文学", title: "誰か", author: "宮部みゆき", year: 2003, summary: "杉村三郎シリーズ第1作。自転車で轢き逃げされた無口な運転手の過去を調べることになった杉村が見た真実。", memo: "" },
-      { id: "87", category: "日本文学", title: "名もなき毒", author: "宮部みゆき", year: 2006, summary: "職場を混乱させるトラブルメーカーの女性と無差別毒殺事件。日常に潜む目に見えない「毒」を描く極上ミステリー。", memo: "" },
-      { id: "88", category: "日本文学", title: "ペテロの葬列", author: "宮部みゆき", year: 2013, summary: "バスジャック事件に巻き込まれた杉村三郎。犯人の老人が語る「慰謝料」を巡り、人間の悪意の連鎖が暴かれる。", memo: "" },
-      { id: "89", category: "日本文学", title: "とかげ", author: "よしもとばなな", year: 1993, summary: "心に傷やトラウマを抱えた現代の人々が、ささやかな日常や愛を通して再生していくみずみずしい短編集。", memo: "" },
-      { id: "90", category: "日本文学", title: "神様", author: "川上弘美", year: 1994, summary: "くまに誘われて散歩に出かける「日常の中の日常」。ユーモラスでどこか切ない川上弘美のデビュー作。", memo: "" },
-      { id: "91", category: "日本文学", title: "ロシア紅茶の謎", author: "有栖川有栖", year: 1994, summary: "臨床犯罪学者・火村英生と推理作家・有栖川有栖の黄金コンビが挑む本格国籍シリーズ第1弾短編集。", memo: "" },
-      { id: "92", category: "日本文学", title: "スイス時計の謎", author: "有栖川有栖", year: 2003, summary: "遺品の中に残された「不正確に刻むスイス時計」。火村英生が精密な論理で解き明かす国籍シリーズ名作。", memo: "" },
-      { id: "93", category: "日本文学", title: "モロッコ水晶の謎", author: "有栖川有栖", year: 2005, summary: "怪しい新興宗教団体と水晶玉を巡る不審死。火村英生とアリスが複雑な人間関係の闇に踏み込む。", memo: "" },
-      { id: "94", category: "日本文学", title: "鍵のかかった男", author: "有栖川有栖", year: 2015, summary: "開かずの間で発見された死体。自ら「鍵のかかった男」として生きた被害者の隠された秘密を火村が暴く。", memo: "" },
-      { id: "95", category: "日本文学", title: "ねじまき鳥クロニクル", author: "村上春樹", year: 1994, summary: "消えた猫と妻を探す主人公僕が、井戸の底に潜みながら奇妙な人々と出会い世界の裏側の暴力と対峙する。", memo: "" },
-      { id: "96", category: "日本文学", title: "鉄道員（ぽっぽや）", author: "浅田次郎", year: 1997, summary: "廃線寸前の雪深い駅で一人たたずむ頑固な駅長。彼のもとに奇跡のように現れる少女たちを描く直木賞受賞作。", memo: "" },
-      { id: "97", category: "日本文学", title: "エイジ", author: "重松清", year: 1999, summary: "同級生が通り魔事件を起こした。14歳という多感で不安定な季節を全力で生きる少年エイジのリアルな葛藤。", memo: "" },
-      { id: "98", category: "日本文学", title: "ルビィ", author: "重松清", year: 2003, summary: "人生の壁にぶつかった大人たちが、ふと出会った存在を通して前を向く強さを手に入れる短編作品集。", memo: "" },
-      { id: "99", category: "日本文学", title: "沈まぬ太陽", author: "山崎豊子", year: 1999, summary: "巨大航空会社に勤務する恩地元。不当な左遷や墜落事故の遺族対応に追われながらも信念を貫く男の生き様。", memo: "" },
-      { id: "100", category: "日本文学", title: "FLY", author: "新野剛志", year: 2000, summary: "沖縄の真夏の空を背景に、極限状態の中で自分の生き方を模索する若者たちを描いた小説すばる新人賞受賞作。", memo: "" },
-      { id: "101", category: "日本文学", title: "氷菓", author: "米澤穂信", year: 2001, summary: "「やらなくてもいいことなら、やらない」省エネ高校生・折木奉太郎が神山高校古典部で日常の謎を解き明かす。", memo: "" },
-      { id: "102", category: "日本文学", title: "愚者のエンドロール", author: "米澤穂信", year: 2002, summary: "自主制作映画の未完成ミステリー。奉太郎は映画の「結末」を推理することになるが…古典部シリーズ第2弾。", memo: "" },
-      { id: "103", category: "日本文学", title: "クドリャフカの順番", author: "米澤穂信", year: 2002, summary: "文化祭でにぎわう神山高校で起きる連続盗難事件「十文字」。古典部メンバーがそれぞれの方法で謎に挑む。", memo: "" },
-      { id: "104", category: "日本文学", title: "インシテミル", author: "米澤穂信", year: 2007, summary: "時給10万円の怪しい実験バイト。鍵のかかった暗黒館に集められた12人の参加者たちがデスゲームに巻き込まれる。", memo: "" },
-      { id: "105", category: "日本文学", title: "遠回りする雛", author: "米澤穂信", year: 2007, summary: "千反田えるとの絆や古典部メンバーの季節ごとの成長を描いた、古典部シリーズ初の短編集。", memo: "" },
-      { id: "106", category: "日本文学", title: "ふたりの距離の概算", author: "米澤穂信", year: 2010, summary: "マラソン大会中、走る奉太郎は入部を辞退した新入生の真意を走りながら思考し解き明かす。", memo: "" },
-      { id: "107", category: "日本文学", title: "真実の10メートル手前", author: "米澤穂信", year: 2015, summary: "フリーライター太刀洗万智のクールで鋭い洞察力が冴えわたるミステリー短編集。", memo: "" },
-      { id: "108", category: "日本文学", title: "いまさら翼といわれても", author: "米澤穂信", year: 2016, summary: "合唱祭の出番前に消えた千反田える。古典部メンバーたちの高校2年生の進路や葛藤を描いた短編集。", memo: "" },
-      { id: "109", category: "日本文学", title: "本と鍵の季節", author: "米澤穂信", year: 2018, summary: "図書委員の男子高校生ふたりが、開かない金庫や図書室に持ち込まれる謎を解き明かすビターミステリー。", memo: "" },
-      { id: "110", category: "日本文学", title: "黒牢城", author: "米澤穂信", year: 2021, summary: "荒木村重の有岡城で起きる不可解な事件。地下牢に捕らえられた黒田官兵衛が謎を解く直木賞・山本周五郎賞受賞作。", memo: "" },
-      { id: "111", category: "日本文学", title: "栞と嘘の季節", author: "米澤穂信", year: 2022, summary: "図書室の猛毒本「トリカブト」の挟み込み事件。図書委員コンビが校内の嘘と謎を追いかけるシリーズ第2弾。", memo: "" },
-      { id: "112", category: "日本文学", title: "陽気なギャングが地球を回す", author: "伊坂幸太郎", year: 2003, summary: "嘘を見抜く名人、口達者、スリ、時計狂の4人の奇妙な悪党たちが銀行強盗を成功させる爽快エンタメ。", memo: "" },
-      { id: "113", category: "日本文学", title: "アヒルと鴨のコインロッカー", author: "伊坂幸太郎", year: 2003, summary: "引っ越してきたアパートの隣人に「一緒に本屋で広辞苑を襲わないか」と誘われたことから始まるせつない物語。", memo: "" },
-      { id: "114", category: "日本文学", title: "チルドレン", author: "伊坂幸太郎", year: 2004, summary: "「俺たちはチルドレンだ」。破天荒だが憎めない家庭裁判所調査官・陣内が巻き起こす爽やかな短編集。", memo: "" },
-      { id: "115", category: "日本文学", title: "砂漠", author: "伊坂幸太郎", year: 2005, summary: "麻雀、コンパ、犯罪者との遭遇。大学という「砂漠」で奇妙な友情を結んだ5人の大学生の青春物語。", memo: "" },
-      { id: "116", category: "日本文学", title: "死神の精度", author: "伊坂幸太郎", year: 2005, summary: "CDショップが好きで雨男の死神・千葉。彼が7日間の調査の末に対象者の「可」か「見送り」かを判定する。", memo: "" },
-      { id: "117", category: "日本文学", title: "ゴールデンスランバー", author: "伊坂幸太郎", year: 2007, summary: "首相暗殺の濡れ衣を着せられた無実の男・青柳雅春。巨大な陰謀から身ひとつで逃げまくる決死の逃亡劇。", memo: "" },
-      { id: "118", category: "日本文学", title: "オー！ファーザー", author: "伊坂幸太郎", year: 2010, summary: "父親が4人いる高校生・由紀夫。ギャンブル好き、知識人、格闘家、タラシの4人の父に愛され事件に挑む。", memo: "" },
-      { id: "119", category: "日本文学", title: "火星に住むつもりかい？", author: "伊坂幸太郎", year: 2015, summary: "「平和警察」による監視と冤罪の嵐。理不尽な恐怖政治に立ち向かう正義の味方・「正義の味方」の戦い。", memo: "" },
-      { id: "120", category: "日本文学", title: "逆ソクラテス", author: "伊坂幸太郎", year: 2020, summary: "「先入観をひっくり返せ！」。生意気な小学生や子供たちが大人の決めつけに一撃を喰らわせる短編傑作集。", memo: "" },
-      { id: "121", category: "日本文学", title: "博士の愛した数式", author: "小川洋子", year: 2003, summary: "記憶が80分しか持たない天才数学博士と家政婦とその息子。数字の美しさを通して通い合う奇跡の愛。", memo: "" },
-      { id: "122", category: "日本文学", title: "不祥事", author: "池井戸潤", year: 2004, summary: "臨店班の花咲舞が銀行内の不祥事や不正をズバッと暴く、大人気爽快お仕事エンターテインメント。", memo: "" },
-      { id: "123", category: "日本文学", title: "空飛ぶタイヤ", author: "池井戸潤", year: 2006, summary: "トレーラーの脱輪事故で死傷者が出た。運送会社社長は自社の無実を証明するため、大企業の隠蔽に挑む。", memo: "" },
-      { id: "124", category: "日本文学", title: "下町ロケット", author: "池井戸潤", year: 2010, summary: "町工場の熱き技術魂！ロケットエンジンのバルブシステム開発に情熱を注ぐ中小企業の戦い。", memo: "" },
-      { id: "125", category: "日本文学", title: "民王", author: "池井戸潤", year: 2010, summary: "厳格な総理大臣の父とバカな大学生の息子の中身が入れ替わってしまった！政治界を揺るがす爆笑コメディ。", memo: "" },
-      { id: "126", category: "日本文学", title: "七つの会議", author: "池井戸潤", year: 2012, summary: "「ぐうたら社員」が起こしたパワハラ告発。企業の中に潜む深い不正と歪んだ組織の闇を暴く痛快劇。", memo: "" },
-      { id: "127", category: "日本文学", title: "ようこそ、わが家へ", author: "池井戸潤", year: 2013, summary: "ストーカー被害と会社での不正発覚。気弱な父親と家族が勇気を出して追い詰められた状況を跳ね返す。", memo: "" },
-      { id: "128", category: "日本文学", title: "アキラとあきら", author: "池井戸潤", year: 2017, summary: "大企業の御曹司と倒産危機を乗り越えた極貧の少年。対照的な宿命を背負った2人の「あきら」の銀行員ストーリー。", memo: "" },
-      { id: "129", category: "日本文学", title: "闇の剣", author: "岩井三四二", year: 2003, summary: "乱世を生き抜く武士たちの秘められた剣術と策謀を描く重厚な時代本格小説。", memo: "" },
-      { id: "130", category: "日本文学", title: "夜のピクニック", author: "恩田陸", year: 2004, summary: "全校生徒が夜通し80キロを歩く「歩行祭」。高校生活最後のイベントで少年少女の秘密と友情が交錯する。", memo: "" },
-      { id: "131", category: "日本文学", title: "図書館戦争", author: "有川浩", year: 2006, summary: "メディア良化法による検閲から本を守る防衛組織「図書隊」。新米隊員・笠原郁の成長と恋を描くアクションコメディ。", memo: "" },
-      { id: "132", category: "日本文学", title: "図書館内乱", author: "有川浩", year: 2006, summary: "図書隊と良化隊の攻防が激化。両親に図書隊員であることがバレそうになる郁のピンチと部隊の絆。", memo: "" },
-      { id: "133", category: "日本文学", title: "図書館危機", author: "有川浩", year: 2007, summary: "原発襲撃の濡れ衣を着せられた図書隊。危機的状況の中で堂上教官と郁の距離が急接近する。", memo: "" },
-      { id: "134", category: "日本文学", title: "図書館革命", author: "有川浩", year: 2007, summary: "表現の自由を賭けた最終決戦！テロ事件の渦中で郁は傷ついた作家を守り抜き決着をつけられるか。", memo: "" },
-      { id: "135", category: "日本文学", title: "キケン", author: "有川浩", year: 2010, summary: "成南電気工業大学の「機科学詳細研究部（略称キケン）」。伝説の部長たちによる荒唐無稽で熱い大学生活。", memo: "" },
-      { id: "136", category: "日本文学", title: "まほろ駅前多田便利軒", author: "三浦しをん", year: 2006, summary: "架空の街「まほろ」で便利屋を営む多田と、転がり込んできた同級生・行天が奇妙な依頼をこなしていく日常。", memo: "" },
-      { id: "137", category: "日本文学", title: "舟を編む", author: "三浦しをん", year: 2011, summary: "新しい国語辞典『大渡海』の編纂に情熱を傾ける辞書編集部員たちの地道で胸が熱くなる長い旅路。", memo: "" },
-      { id: "138", category: "日本文学", title: "夜は短し歩けよ乙女", author: "森見登美彦", year: 2006, summary: "黒髪の乙女に恋する「先輩」。京都の街を舞台に繰り広げられるキュートで奇天烈な一夜の恋愛ファンタジー。", memo: "" },
-      { id: "139", category: "日本文学", title: "ペンギン・ハイウェイ", author: "森見登美彦", year: 2010, summary: "郊外の街に突如現れたペンギンたち。少し生意気な小学4年生の少年が「お姉さん」の謎とペンギンの秘密を調べる。", memo: "" },
-      { id: "140", category: "日本文学", title: "さらば雑司ヶ谷", author: "樋口毅宏", year: 2009, summary: "雑司ヶ谷を舞台に、裏社会の人間関係や怨念が渦巻くハードボイルドかつ痛快なエンターテインメント。", memo: "" },
-      { id: "141", category: "日本文学", title: "雑司ヶ谷RIP", author: "樋口毅宏", year: 2010, summary: "前作を超えるカオスと過激な描写で描く雑司ヶ谷シリーズ。欲望と暴力が交錯する疾走小説。", memo: "" },
-      { id: "142", category: "日本文学", title: "天地明察", author: "冲方丁", year: 2009, summary: "江戸時代、日本独自のカレンダー（暦）作りに人生を捧げた囲碁打ち・渋川春海の挫折と栄光を描く感動時代劇。", memo: "" },
-      { id: "143", category: "日本文学", title: "本日は、お日柄もよく", author: "原田マハ", year: 2010, summary: "伝説のスピーチライターに弟子入りしたOLことは。言葉の持つ力で人の心を動かし世界を変える青春ストーリー。", memo: "" },
-      { id: "144", category: "日本文学", title: "生きるぼくら", author: "原田マハ", year: 2012, summary: "引きこもりだった青年が祖母の住む長野で米作りに出会い、自然と人間関係を通して心身ともに再生していく。", memo: "" },
-      { id: "145", category: "日本文学", title: "ジヴェルニーの食卓", author: "原田マハ", year: 2012, summary: "モネ、ドガ、セザンヌ、マティス。印象派のアートの巨匠たちの傍らにいた人物たちの視点から描くアート小説。", memo: "" },
-      { id: "146", category: "日本文学", title: "異邦人", author: "原田マハ", year: 2015, summary: "京都の美の世界と美術品売買の裏側に潜む愛執。若き画商の女性と一枚の美しい絵を巡るアートミステリー。", memo: "" },
-      { id: "147", category: "日本文学", title: "リボルバー", author: "原田マハ", year: 2021, summary: "ゴッホが自ら命を絶つために使ったとされる一丁のピストル。ゴッホとゴーギャンの隠された真実に迫る。", memo: "" },
-      { id: "148", category: "日本文学", title: "おおかみこどもの雨と雪", author: "細田守", year: 2012, summary: "おおかみ男と恋に落ちた花。遺された「おおかみこども」の幼い姉弟を一人で育てる母の愛の物語。", memo: "" },
-      { id: "149", category: "日本文学", title: "月下上海", author: "山口恵以子", year: 2013, summary: "魔都・上海を舞台に、時代の波に飲まれながらたくましく生き抜く女性の運命を描く松本清張賞受賞作。", memo: "" },
-      { id: "150", category: "日本文学", title: "島は僕らと", author: "辻村深月", year: 2013, summary: "瀬戸内海の豊かな島で暮らす4人の高校生たち。島を出る選択と残る選択の狭間で揺れる瑞々しい青春小説。", memo: "" },
-      { id: "151", category: "日本文学", title: "ゼロの迎撃", author: "安生正", year: 2013, summary: "都心部を襲う未知のテロと自然災害。極限状態の中で国家を守るため奮闘する男たちの警察・官邸サスペンス。", memo: "" },
-      { id: "152", category: "日本文学", title: "ぼくは明日、昨日のきみとデートする", author: "七月隆文", year: 2014, summary: "京都の美大生が一目惚れした彼女には、逆方向に流れる時間の中で生きているという切ない秘密があった。", memo: "" },
-      { id: "153", category: "日本文学", title: "最後のトリック", author: "深水黎一郎", year: 2014, summary: "「読者が絶対に犯人になれるミステリー」。叙述トリックの限界に挑戦した異色の推理小説。", memo: "" },
-      { id: "154", category: "日本文学", title: "君の膵臓をたべたい", author: "住野よる", year: 2015, summary: "膵臓の病気で余命わずかなクラスメイト・桜良と「私」。秘密の闘病日記『共病文庫』が二人をつなぐ。", memo: "" },
-      { id: "155", category: "日本文学", title: "羊と鋼の森", author: "宮下奈都", year: 2015, summary: "ピアノの調律に魅せられた青年・外村。調律師としての才能と技術に悩みながら静かに成長していく本屋大賞受賞作。", memo: "" },
-      { id: "156", category: "日本文学", title: "コンビニ人間", author: "村田沙耶香", year: 2016, summary: "36歳未婚、コンビニバイト歴18年の古倉恵子。世界の「普通」に馴染めない彼女が見つけた生き方（芥川賞受賞）。", memo: "" },
-      { id: "157", category: "日本文学", title: "君の名は。", author: "新海誠", year: 2016, summary: "田舎町の女子高生と東京の男子高校生が夢の中で入れ替わる。彗星の降る夜に向かって交錯する愛と運命。", memo: "" },
-      { id: "158", category: "日本文学", title: "推理大戦", author: "似鳥鶏", year: 2017, summary: "世界中の名探偵が集結し、テレビ中継されるリアル謎解きイベントで競い合う究極のエンタメミステリー。", memo: "" },
-      { id: "159", category: "日本文学", title: "育休刑事", author: "似鳥鶏", year: 2019, summary: "育児休業中の男性刑事が、赤ちゃんの離乳食や子育てに追われながらも事件を解決していくハートフルコメディ。", memo: "" },
-      { id: "160", category: "日本文学", title: "そして、バトンは渡された", author: "瀬尾まいこ", year: 2018, summary: "血の繋がらない親たちをリレーするように育てられた優子。親たちの深い愛に包まれた温かな本屋大賞受賞作。", memo: "" },
-      { id: "161", category: "日本文学", title: "いけない", author: "道尾秀介", year: 2019, summary: "各章の最後に挿入された「一枚の写真」によって真相がガラリと裏返る体験型体感ミステリー小説。", memo: "" },
-      { id: "162", category: "日本文学", title: "流浪の月", author: "凪良ゆう", year: 2019, summary: "誘拐犯と被害女児とされた二人。世間の偏見や「正しさ」に傷つきながらも確かな絆で結ばれた愛の物語。", memo: "" },
-      { id: "163", category: "日本文学", title: "どうしても生きてる", author: "朝井リョウ", year: 2019, summary: "人間関係の歪みや生きづらさを抱える人々の日常。それでも「生きていく」選択をするリアルな短編集。", memo: "" },
-      { id: "164", category: "日本文学", title: "正欲", author: "朝井リョウ", year: 2021, summary: "自分が生きていくために必要な「特殊な欲望」。多様性という言葉の陰に隠された深い孤独と理解を描く。", memo: "" },
-      { id: "165", category: "日本文学", title: "あと一歩、もう一歩", author: "横関大", year: 2021, summary: "箱根駅伝を目指すランナーたちの汗と涙。タスキをつなぐ者たちの熱いドラマを描いたスポーツ感動小説。", memo: "" },
-      { id: "166", category: "日本文学", title: "スイッチ 悪意の実験", author: "潮谷験", year: 2021, summary: "「このスイッチを押すと誰かが死ぬ」。人間の悪意と倫理観を実験する不気味で先が読めない新感覚ミステリー。", memo: "" },
-      { id: "167", category: "日本文学", title: "11文字の檻", author: "青崎有吾", year: 2022, summary: "館ものから特殊設定まで、緻密な論理とひらめきが光る青崎有吾の変幻自在な本格ミステリー短編集。", memo: "" },
-      { id: "168", category: "日本文学", title: "君のクイズ", author: "小川哲", year: 2022, summary: "クイズ番組の決勝戦、対戦相手が「一文字も読まれていない問題」に正解した。その不可解な真実を解き明かす。", memo: "" },
+    // 初期表示
+    renderBooks();
 
-      // 海外文学
-      { id: "169", category: "海外文学", title: "ガリヴァー旅行記", author: "ジョナサン・スウィフト", year: 1726, summary: "小人国や大人国、空飛ぶ島などを旅するガリヴァーの冒険を通して人間社会を辛辣に風刺した名作。", memo: "" },
-      { id: "170", category: "海外文学", title: "緋色の研究", author: "アーサー・コナン・ドイル", year: 1887, summary: "シャーロック・ホームズとワトソン医師が出会い、復讐に燃える連続殺人事件を解き明かす記念すべき第1作。", memo: "" },
-      { id: "171", category: "海外文学", title: "四つの署名", author: "アーサー・コナン・ドイル", year: 1890, summary: "インドの宝物と「4つの署名」が残された暗号。メアリー嬢の依頼から始まるホームズの長編長編推理。", memo: "" },
-      { id: "172", category: "海外文学", title: "赤毛連盟", author: "アーサー・コナン・ドイル", year: 1891, summary: "赤毛の人だけが採用される謎の団体。高額な報酬の裏に隠された銀行強盗の企みをホームズが見破る短編。", memo: "" },
-      { id: "173", category: "海外文学", title: "ボヘミアの醜聞", author: "アーサー・コナン・ドイル", year: 1891, summary: "国王の写真を回収する依頼を受けたホームズ。彼が唯一「あの女性」と呼んで尊敬するアイリーン・アドラーが登場。", memo: "" },
-      { id: "174", category: "海外文学", title: "五つのオレンジの種", author: "アーサー・コナン・ドイル", year: 1891, summary: "届いた手紙に入っていた5つのオレンジの種。謎の死を遂げる一族と恐ろしい組織KKKの影。", memo: "" },
-      { id: "175", category: "海外文学", title: "唇のねじれた男", author: "アーサー・コナン・ドイル", year: 1891, summary: "アヘン窟で消えた紳士。ホームズは街角で物乞いをする変装の名人・唇のねじれた男の真相を暴く。", memo: "" },
-      { id: "176", category: "海外文学", title: "技師の親指", author: "アーサー・コナン・ドイル", year: 1892, summary: "親指を切られた状態で駆け込んできた水圧技師。真夜中の怪しいプレス機と偽札製造の恐怖の陰謀。", memo: "" },
-      { id: "177", category: "海外文学", title: "まだらの紐", author: "アーサー・コナン・ドイル", year: 1892, summary: "「まだらの紐…！」と言い残して密室で謎の死を遂げた姉。ホームズが冷酷な義父の恐ろしい殺害トリックを暴く。", memo: "" },
-      { id: "178", category: "海外文学", title: "ぶな屋敷", author: "アーサー・コナン・ドイル", year: 1892, summary: "奇妙な条件で家庭教師に採用された女性。髪を切らせ服を指定する屋敷の主人の不気味な企み。", memo: "" },
-      { id: "179", category: "海外文学", title: "最後の事件", author: "アーサー・コナン・ドイル", year: 1893, summary: "宿敵モリアーティ教授との一騎打ち。ライヘンバッハの滝での死闘を描いたショッキングな名作。", memo: "" },
-      { id: "180", category: "海外文学", title: "空き家の冒険", author: "アーサー・コナン・ドイル", year: 1903, summary: "生きていたホームズ！奇跡の生還を果たしワトソンと再会したホームズが残党の狙撃手に罠を仕掛ける。", memo: "" },
-      { id: "181", category: "海外文学", title: "踊る人形", author: "アーサー・コナン・ドイル", year: 1903, summary: "踊る人形の落書きのような謎の暗号。ホームズが解読に成功するが、悲劇はすでに始まっていた。", memo: "" },
-      { id: "182", category: "海外文学", title: "ブラック・ピーター", author: "アーサー・コナン・ドイル", year: 1904, summary: "モリで小屋の壁に突き刺されて殺された荒れる船長。ホームズが強烈な力と事件の背景を推理する。", memo: "" },
-      { id: "183", category: "海外文学", title: "第二の汚点", author: "アーサー・コナン・ドイル", year: 1904, summary: "国家の存亡に関わる重大な外交文書が盗まれた。ホームズが極密裏に捜査を進め国際問題を阻止する。", memo: "" },
-      { id: "184", category: "海外文学", title: "恐怖の谷", author: "アーサー・コナン・ドイル", year: 1915, summary: "館で顔を潰されて殺された男。アメリカの秘密結社とモリアーティ教授の影が交差する傑作長編。", memo: "" },
-      { id: "185", category: "海外文学", title: "怪盗紳士アルセーヌ・ルパン", author: "モーリス・ルブラン", year: 1907, summary: "変幻自在の変装術と華麗な手口で盗みを働く怪盗ルパンの華々しいデビューを描いた短編集。", memo: "" },
-      { id: "186", category: "海外文学", title: "ルパン対ホームズ", author: "モーリス・ルブラン", year: 1908, summary: "フランスが誇る大怪盗ルパンと、英国の名探偵ハーロック・ホームズによる世紀の知恵くらべ対決。", memo: "" },
-      { id: "187", category: "海外文学", title: "奇岩城", author: "モーリス・ルブラン", year: 1909, summary: "フランス王家の財宝が眠る針のような岩城。ルパンと高校生探偵ボートルレの知力戦を描く最高峰。", memo: "" },
-      { id: "188", category: "海外文学", title: "813", author: "モーリス・ルブラン", year: 1910, summary: "「813」の数字に隠されたヨーロッパを揺るがす秘密。ルパン史上最も壮大で暗いスケールの傑作長編。", memo: "" },
-      { id: "189", category: "海外文学", title: "緑の目の令嬢", author: "モーリス・ルブラン", year: 1927, summary: "緑の目を持つ美しい令嬢を巡る殺人事件と宝探し。ルパンが恋と冒険に駆け巡るアドベンチャー。", memo: "" },
-      { id: "190", category: "海外文学", title: "バーネット探偵社", author: "モーリス・ルブラン", year: 1928, summary: "バーネットと名乗って私立探偵業務を行うルパン。警察を翻弄しながら報酬なしで事件を解決していく短編集。", memo: "" },
-      { id: "191", category: "海外文学", title: "オルヌカン城の謎", author: "モーリス・ルブラン", year: 1935, summary: "古城に隠された秘密の通路と連続殺人。老いたルパンが再び知恵を絞って謎解きに挑む。", memo: "" },
-      { id: "192", category: "海外文学", title: "ルパン最後の恋", author: "モーリス・ルブラン", year: 1941, summary: "ルパンの遺稿として発見された幻の遺作。ルパンの最期の愛と悲劇的な冒険を描いたファン必読書。", memo: "" },
-      { id: "193", category: "海外文学", title: "アクロイド殺し", author: "アガサ・クリスティ", year: 1926, summary: "村の名士アクロイド卿が刺殺された。ポアロが挑むミステリー史上に燦然と輝く衝撃の結末。", memo: "" },
-      { id: "194", category: "海外文学", title: "火曜クラブ", author: "アガサ・クリスティ", year: 1932, summary: "老婦人ミス・マープルが自宅に集まる人々が語る未解決事件の謎を編み物をしながら見破る短編集。", memo: "" },
-      { id: "195", category: "海外文学", title: "オリエント急行の殺人", author: "アガサ・クリスティ", year: 1934, summary: "雪で立ち往生した豪華列車内で起きた密室殺人。乗客全員にアリバイがある中、ポアロが出した答えとは。", memo: "" },
-      { id: "196", category: "海外文学", title: "ABC殺人事件", author: "アガサ・クリスティ", year: 1936, summary: "アルファベット順に起きていく連続予告殺人。ポアロのもとに届く挑戦状とAから始まる街での事件。", memo: "" },
-      { id: "197", category: "海外文学", title: "ナイルに死す", author: "アガサ・クリスティ", year: 1937, summary: "ナイル川を下る豪華客船で起きた大富豪の美しき新妻殺人。愛と嫉妬が渦巻くポアロの名推理。", memo: "" },
-      { id: "198", category: "海外文学", title: "そして誰もいなくなった", author: "アガサ・クリスティ", year: 1939, summary: "孤島に集められた10人の男女。童謡の歌詞通りに一人ずつ消えていくクローズドサークルの最高傑作。", memo: "" },
-      { id: "199", category: "海外文学", title: "パディントン発4時50分", author: "アガサ・クリスティ", year: 1957, summary: "並走する電車の窓から目撃された殺人現場。死体が見つからない中、ミス・マープルが家政婦を送り込み捜査する。", memo: "" },
-      { id: "200", category: "海外文学", title: "動物農場", author: "ジョージ・オーウェル", year: 1945, summary: "人間を追い出して理想の農場を作った動物たち。だがやがて豚が独裁者となり恐怖政治へ変貌するディストピア風刺。", memo: "" },
-      { id: "201", category: "海外文学", title: "マイン", author: "ロバート・R・マキャモン", year: 1990, summary: "過激派の元テロリストの女が赤ん坊を連れ去った！我が子を取り戻すため追跡する母親の命懸けのホラーサスペンス。", memo: "" },
+    // Wikipedia検索機能
+    async function searchBooks() {
+      const query = document.getElementById('searchInput').value.trim();
+      const resultsContainer = document.getElementById('searchResults');
+      resultsContainer.innerHTML = '';
 
-      // 洋書
-      { id: "202", category: "洋書", title: "A Christmas Carol", author: "チャールズ・ディケンズ", year: 1843, summary: "冷酷で強欲な老人スクルージがクリスマスの夜に3人の霊に導かれ、改心して温かい心を取り戻す。", memo: "" },
-      { id: "203", category: "洋書", title: "Les Misérables（レ・ミゼラブル）", author: "ヴィクトル・ユゴー", year: 1862, summary: "パンを一つ盗んだ罪で19年服役したジャン・バルジャンが、人々の愛と慈悲によって魂を救われていく壮大なドラマ。", memo: "" },
-      { id: "204", category: "洋書", title: "Dr Jekyll and Mr. Hyde", author: "R・L・スティーヴンソン", year: 1886, summary: "善のジキル博士と悪のハイド氏。薬によって人間の内に潜む2つの心覚醒させる二重人格ホラーの原点。", memo: "" },
-      { id: "205", category: "洋書", title: "The Canterville Ghost（カンタヴィルの幽霊）", author: "オスカー・ワイルド", year: 1887, summary: "古城に棲む格式高い英国幽霊が、まったく脅かされない現実的なアメリカ人一家に翻弄されるユーモア小説。", memo: "" },
-      { id: "206", category: "洋書", title: "The Hound of the Baskervilles", author: "アーサー・コナン・ドイル", year: 1902, summary: "魔の犬の伝説が残る不気味な湿原。バスカヴィル家に迫る恐怖にホームズとワトソンが挑む長編傑作。", memo: "" },
-      { id: "207", category: "洋書", title: "The Chronicles of Narnia", author: "C・S_ルイス", year: 1950, summary: "ナルニア国の創世から終焉までを描いた全7巻からなる世界的ファンタジー巨編の洋書版原著。", memo: "" },
+      if (!query) return;
 
-      // 新書・実用書
-      { id: "208", category: "新書・実用書", title: "旅をする木", author: "星野道夫", year: 1999, summary: "アラスカの大自然とアラスカの人々の暮らしを温かい眼差しで捉えた写真家・星野道夫の感動エッセイ。", memo: "" },
-      { id: "209", category: "新書・実用書", title: "寝ながら学べる構造主義", author: "内田樹", year: 2002, summary: "難解なレヴィ＝ストロースやフーコーなどの「構造主義」哲学を、平易な言葉で分かりやすく解説した入門書。", memo: "" },
-      { id: "210", category: "新書・実用書", title: "そうだったのか！中国", author: "池上彰", year: 2005, summary: "中国の歴史、政治体制、経済成長の裏側を池上彰が客観的かつ分かりやすく紐解いた現代中国解説書。", memo: "" },
-      { id: "211", category: "新書・実用書", title: "反哲学入門", author: "木田元", year: 2007, summary: "ソクラテスから始まる西洋哲学の「常識」を疑い、現代を生きるための思考の転換を説く哲学の解説書。", memo: "" },
-      { id: "212", category: "新書・実用書", title: "暇と退屈の倫理学", author: "國分功一郎", year: 2011, summary: "人はなぜ退屈するのか？暇と退屈を巡る哲学・人類学・心理学の知見を総動員して生きる意味を考察する。", memo: "" },
-      { id: "213", category: "新書・実用書", title: "タモリ論", author: "樋口毅宏", year: 2013, summary: "タモリという不世出の芸能人がなぜ日本人に愛され続けるのか、その魅力を文化的に論じた一冊。", memo: "" },
-      { id: "214", category: "新書・実用書", title: "もっと英語の発音を一つ一つわかりやすく", author: "辰巳友昭", year: 2014, summary: "日本人が苦手とする英語独特の発音やフォニックスを基礎から丁寧なイラスト付きで学べる実用テキスト。", memo: "" },
-      { id: "215", category: "新書・実用書", title: "名画で読み解くイギリス王室12の物語", author: "中野京子", year: 217, summary: "名画の背景にある愛憎劇や歴史的事件を通して、イギリス王室のドラマチックな歴史を紐解く。", memo: "" },
-      { id: "216", category: "新書・実用書", title: "最後はなぜかうまくいくイタリア人", author: "宮嶋薫", year: 2018, summary: "適当に見えて人生を楽しんでいるイタリア人の思考法や暮らし方から、肩の力を抜いて生きるコツを学ぶ。", memo: "" },
-      { id: "217", category: "新書・実用書", title: "一度読んだら絶対に忘れない世界史の教科書", author: "山﨑圭一", year: 2018, summary: "年号を使わず「ストーリー」として世界史をつなげて解説する、画期的なベストセラー教科書。", memo: "" },
-      { id: "218", category: "新書・実用書", title: "一度読んだら絶対に忘れない日本史の教科書", author: "山﨑圭一", year: 2019, summary: "政権の担当者を軸に「一つの数珠つなぎのドラマ」として日本の歴史を一気通貫で学べる教科書。", memo: "" },
-      { id: "219", category: "新書・実用書", title: "一度読んだら絶対に忘れない世界史の教科書 経済", author: "山﨑圭一", year: 2020, summary: "「お金」や「貿易」の流れに着目し、世界史のダイナミックな変化を分かりやすく整理した経済視点の世界史。", memo: "" },
-      { id: "220", category: "新書・実用書", title: "一度読んだら絶対に忘れない地理の教科書", author: "山﨑圭一", year: 2021, summary: "地形や気候などの仕組みをロジカルに理解し、暗記に頼らず世界地理の基本が頭に入る入門書。", memo: "" },
-      { id: "221", category: "新書・実用書", title: "僕はイエローでホワイトで、ちょっとブルー", author: "ブレイディみかこ", year: 2019, summary: "英国の元底辺中学校に通う息子と母。人種差別や格差社会に直面しながらもたくましく生きる親子のノンフィクション。", memo: "" },
-      { id: "222", category: "新書・実用書", title: "僕はイエローでホワイトで、ちょっとブルー 2", author: "ブレイディみかこ", year: 2021, summary: "パンデミックや社会の分断の中で成長していく息子の姿と、より複雑化する問題を共に考えるシリーズ第2弾。", memo: "" },
-      { id: "223", category: "新書・実用書", title: "世界一やさしい「やりたいこと」の見つけ方", author: "八木仁平", year: 220, summary: "「大事なこと」「得意なこと」「好きなこと」の組み合わせで本当にやりたいことを見つける自己理解メソッド。", memo: "" },
-      { id: "224", category: "新書・実用書", title: "脳が一生忘れないインプット術", author: "今井知志", year: 2020, summary: "脳科学に基づいた効果的な読書・学習法。記憶に確実に残る正しいインプットのやり方を解説。", memo: "" },
-      { id: "225", category: "新書・実用書", title: "13歳からの金融入門", author: "デヴィッド・ビアンキ", year: 2021, summary: "お金の仕組み、投資、貯蓄、ローンまで、若いうちから知っておくべき金融の基本をわかりやすく提示。", memo: "" },
-      { id: "226", category: "新書・実用書", title: "娘の味 残るは食欲", author: "阿川佐和子", year: 2021, summary: "母の思い出の料理やおいしいものへの執着。阿川佐和子ならではのユーモアと愛にあふれる食卓エッセイ。", memo: "" },
-      { id: "227", category: "新書・実用書", title: "勉強が面白くなる瞬間", author: "パク・ソンヒョク", year: 2022, summary: "心構えとモチベーションを変えることで、勉強が苦痛から喜びに変わる韓国発のミリオンセラー勉強法。", memo: "" },
-      { id: "228", category: "新書・実用書", title: "瞬時に言語化できる人が、うまくいく。", author: "荒木俊哉", year: 2022, summary: "「思いをうまく言葉にできない」を解消する。頭の中のモヤモヤを瞬時に具体的な言葉にするトレーニング法。", memo: "" },
-      { id: "229", category: "新書・実用書", title: "ものがわかるということ", author: "養老孟司", year: 2023, summary: "「わかる」とはどういうことか？解剖学者・養老孟司が自然や感覚を通して知性の神髄を優しく語る。", memo: "" },
-      { id: "230", category: "新書・実用書", title: "頭がいい人のChatGPT＆Copilotの使い方", author: "橋本大輝", year: 2024, summary: "生成AIを日常業務や学習の強力なパートナーとして使いこなし、成果を何倍にも高める実践プロンプト術。", memo: "" },
-      { id: "231", category: "新書・実用書", title: "自分とか、ないから。教養としての東洋哲学", author: "しんめいP", year: 2024, summary: "ブッダや老子などの東洋哲学をユーモラスに解説。「自分」にとらわれず生きやすくするための現代の処方箋。", memo: "" },
+      resultsContainer.innerHTML = '<p style="font-size: 14px; color: #64748b;">検索中...</p>';
 
-      // その他
-      { id: "232", category: "その他", title: "インド神話", author: "不詳", year: 0, summary: "ラーマーヤナやマハーバーラタなど、ヒンドゥー教の神々の戦いと世界の創造を描いた壮大な神話体系。", memo: "" }
-    ];
+      try {
+        const res = await fetch(`https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`);
+        const data = await res.json();
+        const results = data.query.search;
 
-    const categoryOrder = ["児童文学", "日本文学", "海外文学", "洋書", "新書・実用書", "その他"];
-    let books = [];
-
-    // ローカルストレージまたは初期データから取得
-    function initData() {
-      const saved = localStorage.getItem('my_book_list');
-      if (saved) {
-        books = JSON.parse(saved);
-      } else {
-        books = [...initialBooks];
-        saveData();
-      }
-      renderBooks();
-    }
-
-    function saveData() {
-      localStorage.setItem('my_book_list', JSON.stringify(books));
-    }
-
-    // ①に準拠したソーティング (カテゴリー順 -> 著者別 -> 時代順)
-    function sortBooks(bookArray) {
-      return bookArray.sort((a, b) => {
-        // 1. カテゴリー順
-        const catA = categoryOrder.indexOf(a.category);
-        const catB = categoryOrder.indexOf(b.category);
-        if (catA !== catB) return catA - catB;
-
-        // 2. 作者名順（同一作者を並べる）
-        if (a.author !== b.author) {
-          return a.author.localeCompare(b.author, 'ja');
+        resultsContainer.innerHTML = '';
+        if (results.length === 0) {
+          resultsContainer.innerHTML = '<p style="font-size: 14px; color: #64748b;">見つかりませんでした。</p>';
+          return;
         }
 
-        // 3. 時代順 (発表年)
-        return (a.year || 9999) - (b.year || 9999);
-      });
-    }
-
-    // アプリのメイン描画
-    function renderBooks(filterText = "") {
-      const container = document.getElementById('booksContainer');
-      container.innerHTML = "";
-
-      let filtered = books;
-      if (filterText) {
-        const query = filterText.toLowerCase();
-        filtered = books.filter(b => 
-          b.title.toLowerCase().includes(query) || 
-          b.author.toLowerCase().includes(query)
-        );
-      }
-
-      const sorted = sortBooks(filtered);
-
-      // カテゴリーごとにグループ分けして描画
-      categoryOrder.forEach(cat => {
-        const catBooks = sorted.filter(b => b.category === cat);
-        if (catBooks.length === 0) return;
-
-        const catSec = document.createElement('div');
-        catSec.className = 'category-section';
-        catSec.innerHTML = `<div class="category-header">■ ${cat}（${catBooks.length}冊）</div>`;
-
-        catBooks.forEach(book => {
-          const card = document.createElement('div');
-          card.className = 'book-card';
-          card.innerHTML = `
-            <div class="book-title">${escapeHtml(book.title)}</div>
-            <div class="book-author">— ${escapeHtml(book.author)}</div>
-            
-            <div class="book-tabs">
-              <button class="tab-btn active" onclick="switchTab('${book.id}', 'summary')">あらすじ</button>
-              <button class="tab-btn" onclick="switchTab('${book.id}', 'memo')">メモ</button>
-            </div>
-
-            <div id="tab-summary-${book.id}" class="tab-content active">
-              ${escapeHtml(book.summary || "あらすじがありません。")}
-            </div>
-            
-            <div id="tab-memo-${book.id}" class="tab-content">
-              <textarea class="memo-textarea" placeholder="メモを入力..." onchange="updateMemo('${book.id}', this.value)">${escapeHtml(book.memo || "")}</textarea>
-            </div>
-          `;
-          catSec.appendChild(card);
+        results.slice(0, 3).forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'result-item';
+          const cleanSnippet = item.snippet.replace(/<[^>]*>?/gm, '');
+          div.innerHTML = `<strong>${item.title}</strong><br><small style="color:#64748b;">${cleanSnippet.substring(0, 50)}...</small>`;
+          
+          // 選択されたらプレビュー確認画面（モーダル）を開く
+          div.onclick = () => {
+            resultsContainer.innerHTML = '';
+            document.getElementById('searchInput').value = '';
+            openConfirmModal(item.title, 'Wikipediaより', cleanSnippet);
+          };
+          resultsContainer.appendChild(div);
         });
-
-        container.appendChild(catSec);
-      });
-    }
-
-    // タブ切り替え
-    function switchTab(bookId, tabType) {
-      const card = document.getElementById(`tab-${tabType}-${bookId}`).parentElement;
-      const buttons = card.querySelectorAll('.tab-btn');
-      const contents = card.querySelectorAll('.tab-content');
-
-      buttons.forEach(btn => btn.classList.remove('active'));
-      contents.forEach(cnt => cnt.classList.remove('active'));
-
-      if (tabType === 'summary') {
-        buttons[0].classList.add('active');
-        document.getElementById(`tab-summary-${bookId}`).classList.add('active');
-      } else {
-        buttons[1].classList.add('active');
-        document.getElementById(`tab-memo-${bookId}`).classList.add('active');
+      } catch (e) {
+        resultsContainer.innerHTML = '<p style="font-size: 14px; color: red;">エラーが発生しました。</p>';
       }
     }
 
-    // メモの保存
-    function updateMemo(id, text) {
-      const book = books.find(b => b.id === id);
-      if (book) {
-        book.memo = text;
-        saveData();
-      }
+    // ③＆② モーダルを開く（新規追加確認 または 編集）
+    function openConfirmModal(title = '', author = '', desc = '', memo = '', index = null) {
+      currentEditIndex = index;
+      document.getElementById('modalTitle').textContent = index === null ? 'この内容で本棚に追加しますか？' : '本を編集';
+      document.getElementById('modalBookTitle').value = title;
+      document.getElementById('modalBookAuthor').value = author;
+      document.getElementById('modalBookDesc').value = desc;
+      document.getElementById('modalBookMemo').value = memo;
+      document.getElementById('modalOverlay').classList.remove('hidden');
     }
 
-    // ② 検索処理
-    function handleSearch() {
-      const q = document.getElementById('searchInput').value;
-      renderBooks(q);
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+      currentEditIndex = null;
     }
 
-    // ③ タイトルから作者・あらすじを自動検索して追加登録
-    async function addNewBook() {
-      const titleInput = document.getElementById('newTitle');
-      const categoryInput = document.getElementById('newCategory');
-      const statusMsg = document.getElementById('statusMsg');
-      const addBtn = document.getElementById('addBtn');
-
-      const title = titleInput.value.trim();
-      const category = categoryInput.value;
+    // モーダルの保存ボタンを押したとき
+    function saveModalData() {
+      const title = document.getElementById('modalBookTitle').value.trim();
+      const author = document.getElementById('modalBookAuthor').value.trim();
+      const desc = document.getElementById('modalBookDesc').value.trim();
+      const memo = document.getElementById('modalBookMemo').value.trim();
 
       if (!title) {
-        alert("タイトルを入力してください");
+        alert('タイトルを入力してください');
         return;
       }
 
-      addBtn.disabled = true;
-      statusMsg.innerText = "Wikipediaから作者とあらすじを検索中...";
+      const bookData = { title, author, desc, memo };
 
-      let author = "不詳";
-      let summary = "あらすじ情報が見つかりませんでした。";
-
-      try {
-        // Wikipedia APIによるタイトル検索
-        const wikiUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-        const res = await fetch(wikiUrl);
-        
-        if (res.ok) {
-          const data = await res.json();
-          if (data.extract) {
-            // 1行程度の長さ（120文字程度）に調整
-            summary = data.extract.split('\n')[0].substring(0, 120) + "…";
-          }
-          
-          // 作者名の簡易推定（抽出テキストから「〜による作品」「〜の著書」などを検索）
-          const match = data.extract ? data.extract.match(/(?:著者|作者|作|執筆)[：:は\s]([^\s,、。]+)/) : null;
-          if (match && match[1]) {
-            author = match[1];
-          }
-        }
-      } catch (e) {
-        console.log("Wikipedia検索エラー:", e);
+      if (currentEditIndex === null) {
+        // 新規追加
+        books.unshift(bookData);
+      } else {
+        // ② 既存データの更新
+        books[currentEditIndex] = bookData;
       }
 
-      // 新しい本オブジェクトを作成
-      const newBook = {
-        id: Date.now().toString(),
-        category: category,
-        title: title,
-        author: author,
-        year: new Date().getFullYear(),
-        summary: summary,
-        memo: ""
-      };
+      saveAndRender();
+      closeModal();
+    }
 
-      books.push(newBook);
-      saveData();
+    // ② 既存の本を編集モーダルで開く
+    function editBook(index) {
+      const b = books[index];
+      openConfirmModal(b.title, b.author || '', b.desc || '', b.memo || '', index);
+    }
+
+    // 本の削除
+    function deleteBook(index) {
+      if (confirm('この本を本棚から削除しますか？')) {
+        books.splice(index, 1);
+        saveAndRender();
+      }
+    }
+
+    // 保存と描画
+    function saveAndRender() {
+      localStorage.setItem('my_books', JSON.stringify(books));
       renderBooks();
+    }
 
-      titleInput.value = "";
-      statusMsg.innerText = "追加しました！";
-      addBtn.disabled = false;
+    // 画面の更新
+    function renderBooks() {
+      const container = document.getElementById('bookList');
+      container.innerHTML = '';
 
-      setTimeout(() => { statusMsg.innerText = ""; }, 3000);
+      if (books.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#64748b; margin-top:32px;">本棚は空です。上から検索して追加してみましょう！</p>';
+        return;
+      }
+
+      books.forEach((b, index) => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+          <div class="book-title">${escapeHtml(b.title)}</div>
+          <div class="book-author">${escapeHtml(b.author || '著者不明')}</div>
+          ${b.desc ? `<div class="book-section-title">あらすじ</div><div class="book-desc">${escapeHtml(b.desc)}</div>` : ''}
+          ${b.memo ? `<div class="book-section-title">感想・メモ</div><div class="book-memo">${escapeHtml(b.memo)}</div>` : ''}
+          <div class="card-actions">
+            <button class="btn-edit" onclick="editBook(${index})">編集</button>
+            <button class="btn-delete" onclick="deleteBook(${index})">削除</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
     }
 
     function escapeHtml(str) {
-      if (!str) return "";
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
-
-    // 初期化実行
-    window.onload = initData;
   </script>
 </body>
 </html>
