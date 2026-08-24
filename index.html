@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>マイ本棚</title>
   
-  <!-- ④ ホーム画面用アイコンの設定 -->
+  <!-- ④ ホーム画面用アイコン -->
   <link rel="apple-touch-icon" href="https://loosedrawing.com/illust/435/">
   <link rel="icon" href="https://loosedrawing.com/illust/435/">
 
@@ -92,7 +92,6 @@
       background-color: #94a3b8;
     }
 
-    /* 候補リスト */
     .search-results {
       margin-top: 12px;
       display: flex;
@@ -126,6 +125,17 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       border-left: 5px solid var(--primary);
+    }
+
+    .book-category {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
     }
 
     .book-title {
@@ -173,7 +183,7 @@
       font-size: 13px;
     }
 
-    /* モーダル (ポップアップ) */
+    /* モーダル */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -225,26 +235,29 @@
       <h1>📚 マイ本棚</h1>
     </header>
 
-    <!-- 検索/手動追加エリア -->
     <div class="search-box">
       <div class="input-group">
-        <input type="text" id="searchInput" placeholder="本や作者のタイトルを入力...">
+        <input type="text" id="searchInput" placeholder="新しい本や作者を検索...">
         <button onclick="searchBooks()">検索</button>
       </div>
       <div id="searchResults" class="search-results"></div>
-      <div style="text-align: right; margin-top: 8px;">
-        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="openConfirmModal('', '', '')">手動で本を追加</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 12px;">
+        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="resetToDefault()">初期リストに復元</button>
+        <button class="secondary" style="font-size: 12px; padding: 4px 8px;" onclick="openConfirmModal('', '', '')">＋ 手動で追加</button>
       </div>
     </div>
 
-    <!-- 本一覧 -->
     <div id="bookList" class="book-list"></div>
   </div>
 
-  <!-- ③＆② 追加・編集用確認モーダル -->
+  <!-- 追加・編集用確認モーダル -->
   <div id="modalOverlay" class="modal-overlay hidden">
     <div class="modal">
       <h2 id="modalTitle">本棚に追加する</h2>
+      <div class="form-group">
+        <label>カテゴリー</label>
+        <input type="text" id="modalBookCategory" placeholder="例: 児童文学, 日本文学など">
+      </div>
       <div class="form-group">
         <label>タイトル</label>
         <input type="text" id="modalBookTitle">
@@ -269,13 +282,265 @@
   </div>
 
   <script>
-    let books = JSON.parse(localStorage.getItem('my_books') || '[]');
-    let currentEditIndex = null; // 編集中のインデックス (nullの場合は新規)
+    // 提供されたリストデータ
+    const defaultBooks = [
+      // 児童文学
+      { category: "児童文学", title: "クルミ割りとネズミの王様", author: "E・T・A・ホフマン" },
+      { category: "児童文学", title: "ハイジ", author: "ヨハンナ・シュピリ" },
+      { category: "児童文学", title: "宝島", author: "ロバート・ルイス・スティーヴンソン" },
+      { category: "児童文学", title: "十五少年漂流記", author: "ジュール・ヴェルヌ" },
+      { category: "児童文学", title: "オズの魔法使い", author: "L・フランク・ボーム" },
+      { category: "児童文学", title: "ピーターラビットのおはなし", author: "ビアトリクス・ポター" },
+      { category: "児童文学", title: "グロースターの仕立て屋", author: "ビアトリクス・ポター" },
+      { category: "児童文学", title: "ベンジャミンバニーのおはなし", author: "ビアトリクス・ポター" },
+      { category: "児童文学", title: "フロプシーのこどもたち", author: "ビアトリクス・ポター" },
+      { category: "児童文学", title: "カルアシチミーのおはなし", author: "ビアトリクス・ポター" },
+      { category: "児童文学", title: "秘密の花園", author: "フランシス・ホジソン・バーネット" },
+      { category: "児童文学", title: "注文の多い料理店", author: "宮沢賢治" },
+      { category: "児童文学", title: "銀河鉄道の夜", author: "宮沢賢治" },
+      { category: "児童文学", title: "クマのプーさん", author: "A・A・ミルン" },
+      { category: "児童文学", title: "エーミールと探偵たち", author: "エーリヒ・ケストナー" },
+      { category: "児童文学", title: "二人のロッテ", author: "エーリヒ・ケストナー" },
+      { category: "児童文学", title: "ツバメ号とアマゾン号", author: "アーサー・ランサム" },
+      { category: "児童文学", title: "大きな森の小さな家", author: "ローラ・インガルス・ワイルダー" },
+      { category: "児童文学", title: "小さい牛追い", author: "マリー・ハムズン" },
+      { category: "児童文学", title: "牛追いの冬", author: "マリー・ハムズン" },
+      { category: "児童文学", title: "君たちはどう生きるか", author: "吉野源三郎" },
+      { category: "児童文学", title: "ホビットの冒険", author: "J・R・R・トールキン" },
+      { category: "児童文学", title: "名探偵カッレくん", author: "アストリッド・リンドグレーン" },
+      { category: "児童文学", title: "エルマーのぼうけん", author: "ルース・スタイルス・ガネット" },
+      { category: "児童文学", title: "ライオンと魔女", author: "C・S・ルイス" },
+      { category: "児童文学", title: "カスピアン王子のつのぶえ", author: "C・S・ルイス" },
+      { category: "児童文学", title: "朝びらき丸　東の海へ", author: "C・S・ルイス" },
+      { category: "児童文学", title: "銀のいす", author: "C・S・ルイス" },
+      { category: "児童文学", title: "馬と少年", author: "C・S・ルイス" },
+      { category: "児童文学", title: "魔術師のおい", author: "C・S・ルイス" },
+      { category: "児童文学", title: "さいごの戦い", author: "C・S・ルイス" },
+      { category: "児童文学", title: "夜光人間", author: "江戸川乱歩" },
+      { category: "児童文学", title: "くまのパディントン", author: "マイケル・ボンド" },
+      { category: "児童文学", title: "パディントンの一周年記念", author: "マイケル・ボンド" },
+      { category: "児童文学", title: "パディントンの妙技公開", author: "マイケル・ボンド" },
+      { category: "児童文学", title: "パディントンのクリスマス", author: "マイケル・ボンド" },
+      { category: "児童文学", title: "チョコレート工場の秘密", author: "ロアルド・ダール" },
+      { category: "児童文学", title: "くまのコールテンくん", author: "ドン・フリーマン" },
+      { category: "児童文学", title: "モモ", author: "ミヒャエル・エンデ" },
+      { category: "児童文学", title: "こまったさん", author: "寺村輝夫" },
+      { category: "児童文学", title: "わかったさん", author: "寺村輝夫" },
+      { category: "児童文学", title: "魔女の宅急便", author: "角野栄子" },
+      { category: "児童文学", title: "かいけつゾロリ", author: "原ゆたか" },
+      { category: "児童文学", title: "アーモンドチョコレート入りのワルツ", author: "森絵都" },
+      { category: "児童文学", title: "カラフル", author: "森絵都" },
+      { category: "児童文学", title: "夏の庭―The Friends―", author: "湯本香樹実" },
+      { category: "児童文学", title: "あらしのよるに", author: "木村裕一" },
+      { category: "児童文学", title: "西の魔女が死んだ", author: "梨木香歩" },
+      { category: "児童文学", title: "名探偵夢水清志郎事件ノート", author: "はやみねかおる" },
+      { category: "児童文学", title: "守り人", author: "上橋菜穂子" },
+      { category: "児童文学", title: "獣の奏者", author: "上橋菜穂子" },
+      { category: "児童文学", title: "鬼の橋", author: "伊藤遊" },
+      { category: "児童文学", title: "くちぶえ番長", author: "重松清" },
+      { category: "児童文学", title: "小学五年生", author: "重松清" },
+      { category: "児童文学", title: "ブレイブ・ストーリー", author: "宮部みゆき" },
 
-    // 初期表示
+      // 日本文学
+      { category: "日本文学", title: "自転車日記", author: "夏目漱石" },
+      { category: "日本文学", title: "こころ", author: "夏目漱石" },
+      { category: "日本文学", title: "羅生門", author: "芥川龍之介" },
+      { category: "日本文学", title: "山椒大夫", author: "森鴎外" },
+      { category: "日本文学", title: "高瀬舟", author: "森鴎外" },
+      { category: "日本文学", title: "形", author: "菊池寛" },
+      { category: "日本文学", title: "城の崎にて", author: "志賀直哉" },
+      { category: "日本文学", title: "ラムネ氏のこと", author: "谷崎潤一郎" },
+      { category: "日本文学", title: "走れメロス", author: "太宰治" },
+      { category: "日本文学", title: "山月記", author: "中島敦" },
+      { category: "日本文学", title: "ゼロの焦点", author: "松本清張" },
+      { category: "日本文学", title: "砂の女", author: "安部公房" },
+      { category: "日本文学", title: "父の詫び状", author: "向田邦子" },
+      { category: "日本文学", title: "不忠臣蔵", author: "井上ひさし" },
+      { category: "日本文学", title: "十角館の殺人", author: "綾辻行人" },
+      { category: "日本文学", title: "迷路館の殺人", author: "綾辻行人" },
+      { category: "日本文学", title: "99％の誘拐", author: "岡嶋二人" },
+      { category: "日本文学", title: "残像に口紅を", author: "筒井康隆" },
+      { category: "日本文学", title: "殺人現場は雲の上", author: "東野圭吾" },
+      { category: "日本文学", title: "変身", author: "東野圭吾" },
+      { category: "日本文学", title: "容疑者Xの献身", author: "東野圭吾" },
+      { category: "日本文学", title: "新参者", author: "東野圭吾" },
+      { category: "日本文学", title: "真夏の方程式", author: "東野圭吾" },
+      { category: "日本文学", title: "ナミヤ雑貨店の奇蹟", author: "東野圭吾" },
+      { category: "日本文学", title: "禁断の魔術", author: "東野圭吾" },
+      { category: "日本文学", title: "沈黙のパレード", author: "東野圭吾" },
+      { category: "日本文学", title: "長い長い殺人", author: "宮部みゆき" },
+      { category: "日本文学", title: "ステップファザー・ステップ", author: "宮部みゆき" },
+      { category: "日本文学", title: "理由", author: "宮部みゆき" },
+      { category: "日本文学", title: "模倣犯", author: "宮部みゆき" },
+      { category: "日本文学", title: "誰か", author: "宮部みゆき" },
+      { category: "日本文学", title: "名もなき毒", author: "宮部みゆき" },
+      { category: "日本文学", title: "ペテロの葬列", author: "宮部みゆき" },
+      { category: "日本文学", title: "とかげ", author: "よしもとばなな" },
+      { category: "日本文学", title: "神様", author: "川上弘美" },
+      { category: "日本文学", title: "ロシア紅茶の謎", author: "有栖川有栖" },
+      { category: "日本文学", title: "スイス時計の謎", author: "有栖川有栖" },
+      { category: "日本文学", title: "モロッコ水晶の謎", author: "有栖川有栖" },
+      { category: "日本文学", title: "鍵のかかった男", author: "有栖川有栖" },
+      { category: "日本文学", title: "ねじまき鳥クロニクル", author: "村上春樹" },
+      { category: "日本文学", title: "鉄道員（ぽっぽや）", author: "浅田次郎" },
+      { category: "日本文学", title: "エイジ", author: "重松清" },
+      { category: "日本文学", title: "ルビィ", author: "重松清" },
+      { category: "日本文学", title: "沈まぬ太陽", author: "山崎豊子" },
+      { category: "日本文学", title: "FLY", author: "新野剛志" },
+      { category: "日本文学", title: "氷菓", author: "米澤穂信" },
+      { category: "日本文学", title: "愚者のエンドロール", author: "米澤穂信" },
+      { category: "日本文学", title: "クドリャフカの順番", author: "米澤穂信" },
+      { category: "日本文学", title: "インシテミル", author: "米澤穂信" },
+      { category: "日本文学", title: "遠回りする雛", author: "米澤穂信" },
+      { category: "日本文学", title: "ふたりの距離の概算", author: "米澤穂信" },
+      { category: "日本文学", title: "真実の10メートル手前", author: "米澤穂信" },
+      { category: "日本文学", title: "いまさら翼といわれても", author: "米澤穂信" },
+      { category: "日本文学", title: "本と鍵の季節", author: "米澤穂信" },
+      { category: "日本文学", title: "黒牢城", author: "米澤穂信" },
+      { category: "日本文学", title: "栞と嘘の季節", author: "米澤穂信" },
+      { category: "日本文学", title: "陽気なギャングが地球を回す", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "アヒルと鴨のコインロッカー", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "チルドレン", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "砂漠", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "死神の精度", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "ゴールデンスランバー", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "オー！ファーザー", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "火星に住むつもりかい？", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "逆ソクラテス", author: "伊坂幸太郎" },
+      { category: "日本文学", title: "博士の愛した数式", author: "小川洋子" },
+      { category: "日本文学", title: "不祥事", author: "池井戸潤" },
+      { category: "日本文学", title: "空飛ぶタイヤ", author: "池井戸潤" },
+      { category: "日本文学", title: "下町ロケット", author: "池井戸潤" },
+      { category: "日本文学", title: "民王", author: "池井戸潤" },
+      { category: "日本文学", title: "七つの会議", author: "池井戸潤" },
+      { category: "日本文学", title: "ようこそ、わが家へ", author: "池井戸潤" },
+      { category: "日本文学", title: "アキラとあきら", author: "池井戸潤" },
+      { category: "日本文学", title: "闇の剣", author: "岩井三四二" },
+      { category: "日本文学", title: "夜のピクニック", author: "恩田陸" },
+      { category: "日本文学", title: "図書館戦争", author: "有川浩" },
+      { category: "日本文学", title: "図書館内乱", author: "有川浩" },
+      { category: "日本文学", title: "図書館危機", author: "有川浩" },
+      { category: "日本文学", title: "図書館革命", author: "有川浩" },
+      { category: "日本文学", title: "キケン", author: "有川浩" },
+      { category: "日本文学", title: "まほろ駅前多田便利軒", author: "三浦しをん" },
+      { category: "日本文学", title: "舟を編む", author: "三浦しをん" },
+      { category: "日本文学", title: "夜は短し歩けよ乙女", author: "森見登美彦" },
+      { category: "日本文学", title: "ペンギン・ハイウェイ", author: "森見登美彦" },
+      { category: "日本文学", title: "さらば雑司ヶ谷", author: "樋口毅宏" },
+      { category: "日本文学", title: "雑司ヶ谷RIP", author: "樋口毅宏" },
+      { category: "日本文学", title: "天地明察", author: "冲方丁" },
+      { category: "日本文学", title: "本日は、お日柄もよく", author: "原田マハ" },
+      { category: "日本文学", title: "生きるぼくら", author: "原田マハ" },
+      { category: "日本文学", title: "ジヴェルニーの食卓", author: "原田マハ" },
+      { category: "日本文学", title: "異邦人", author: "原田マハ" },
+      { category: "日本文学", title: "リボルバー", author: "原田マハ" },
+      { category: "日本文学", title: "おおかみこどもの雨と雪", author: "細田守" },
+      { category: "日本文学", title: "月下上海", author: "山口恵以子" },
+      { category: "日本文学", title: "島は僕らと", author: "辻村深月" },
+      { category: "日本文学", title: "ゼロの迎撃", author: "安生正" },
+      { category: "日本文学", title: "ぼくは明日、昨日のきみとデートする", author: "七月隆文" },
+      { category: "日本文学", title: "最後のトリック", author: "深水黎一郎" },
+      { category: "日本文学", title: "君の膵臓をたべたい", author: "住野よる" },
+      { category: "日本文学", title: "羊と鋼の森", author: "宮下奈都" },
+      { category: "日本文学", title: "コンビニ人間", author: "村田沙耶香" },
+      { category: "日本文学", title: "君の名は。", author: "新海誠" },
+      { category: "日本文学", title: "推理大戦", author: "似鳥鶏" },
+      { category: "日本文学", title: "育休刑事", author: "似鳥鶏" },
+      { category: "日本文学", title: "そして、バトンは渡された", author: "瀬尾まいこ" },
+      { category: "日本文学", title: "いけない", author: "道尾秀介" },
+      { category: "日本文学", title: "流浪の月", author: "凪良ゆう" },
+      { category: "日本文学", title: "どうしても生きてる", author: "朝井リョウ" },
+      { category: "日本文学", title: "正欲", author: "朝井リョウ" },
+      { category: "日本文学", title: "あと一歩、もう一歩", author: "横関大" },
+      { category: "日本文学", title: "スイッチ　悪意の実験", author: "潮谷験" },
+      { category: "日本文学", title: "11文字の檻", author: "青崎有吾" },
+      { category: "日本文学", title: "君のクイズ", author: "小川哲" },
+
+      // 海外文学
+      { category: "海外文学", title: "ガリヴァー旅行記", author: "ジョナサン・スウィフト" },
+      { category: "海外文学", title: "緋色の研究", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "四つの署名", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "赤毛連盟", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "ボヘミアの醜聞", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "五つのオレンジの種", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "唇のねじれた男", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "技師の親指", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "まだらの紐", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "ぶな屋敷", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "最後の事件", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "空き家の冒険", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "踊る人形", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "ブラック・ピーター", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "第二の汚点", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "恐怖の谷", author: "アーサー・コナン・ドイル" },
+      { category: "海外文学", title: "怪盗紳士アルセーヌ・ルパン", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "ルパン対ホームズ", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "奇岩城", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "813", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "緑の目の令嬢", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "バーネット探偵社", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "オルヌカン城の謎", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "ルパン最後の恋", author: "モーリス・ルブラン" },
+      { category: "海外文学", title: "アクロイド殺し", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "火曜クラブ", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "オリエント急行の殺人", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "ABC殺人事件", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "ナイルに死す", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "そして誰もいなくなった", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "パディントン発4時50分", author: "アガサ・クリスティ" },
+      { category: "海外文学", title: "動物農場", author: "ジョージ・オーウェル" },
+      { category: "海外文学", title: "マイン", author: "ロバート・R・マキャモン" },
+
+      // 洋書
+      { category: "洋書", title: "A Christmas Carol", author: "チャールズ・ディケンズ" },
+      { category: "洋書", title: "Les Misérables（レ・ミゼラブル）", author: "ヴィクトル・ユゴー" },
+      { category: "洋書", title: "Dr Jekyll and Mr. Hyde", author: "R・L・スティーヴンソン" },
+      { category: "洋書", title: "The Canterville Ghost（カンタヴィルの幽霊）", author: "オスカー・ワイルド" },
+      { category: "洋書", title: "The Hound of the Baskervilles", author: "アーサー・コナン・ドイル" },
+      { category: "洋書", title: "The Chronicles of Narnia", author: "C・S・ルイス" },
+
+      // 新書・実用書
+      { category: "新書・実用書", title: "旅をする木", author: "星野道夫" },
+      { category: "新書・実用書", title: "寝ながら学べる構造主義", author: "内田樹" },
+      { category: "新書・実用書", title: "そうだったのか！中国", author: "池上彰" },
+      { category: "新書・実用書", title: "反哲学入門", author: "木田元" },
+      { category: "新書・実用書", title: "暇と退屈の倫理学", author: "國分功一郎" },
+      { category: "新書・実用書", title: "タモリ論", author: "樋口毅宏" },
+      { category: "新書・実用書", title: "もっと英語の発音を一つ一つわかりやすく", author: "辰巳友昭" },
+      { category: "新書・実用書", title: "名画で読み解くイギリス王室12の物語", author: "中野京子" },
+      { category: "新書・実用書", title: "最後はなぜかうまくいくイタリア人", author: "宮嶋薫" },
+      { category: "新書・実用書", title: "一度読んだら絶対に忘れない世界史の教科書", author: "山﨑圭一" },
+      { category: "新書・実用書", title: "一度読んだら絶対に忘れない日本史の教科書", author: "山﨑圭一" },
+      { category: "新書・実用書", title: "一度読んだら絶対に忘れない世界史の教科書　経済", author: "山﨑圭一" },
+      { category: "新書・実用書", title: "一度読んだら絶対に忘れない地理の教科書", author: "山﨑圭一" },
+      { category: "新書・実用書", title: "僕はイエローでホワイトで、ちょっとブルー", author: "ブレイディみかこ" },
+      { category: "新書・実用書", title: "僕はイエローでホワイトで、ちょっとブルー 2", author: "ブレイディみかこ" },
+      { category: "新書・実用書", title: "世界一やさしい「やりたいこと」の見つけ方", author: "八木仁平" },
+      { category: "新書・実用書", title: "脳が一生忘れないインプット術", author: "今井知志" },
+      { category: "新書・実用書", title: "13歳からの金融入門", author: "デヴィッド・ビアンキ" },
+      { category: "新書・実用書", title: "娘の味　残るは食欲", author: "阿川佐和子" },
+      { category: "新書・実用書", title: "勉強が面白くなる瞬間", author: "パク・ソンヒョク" },
+      { category: "新書・実用書", title: "瞬時に言語化できる人が、うまくいく。", author: "荒木俊哉" },
+      { category: "新書・実用書", title: "ものがわかるということ", author: "養老孟司" },
+      { category: "新書・実用書", title: "頭がいい人のChatGPT＆Copilotの使い方", author: "橋本大輝" },
+      { category: "新書・実用書", title: "自分とか、ないから。教養としての東洋哲学", author: "しんめいP" },
+
+      // その他
+      { category: "その他", title: "インド神話", author: "不詳" }
+    ];
+
+    // ローカルストレージになければ初期データをセット
+    let books = JSON.parse(localStorage.getItem('my_books') || 'null');
+    if (!books) {
+      books = defaultBooks;
+      localStorage.setItem('my_books', JSON.stringify(books));
+    }
+
+    let currentEditIndex = null;
+
     renderBooks();
 
-    // Wikipedia検索機能
+    // 検索機能
     async function searchBooks() {
       const query = document.getElementById('searchInput').value.trim();
       const resultsContainer = document.getElementById('searchResults');
@@ -302,7 +567,6 @@
           const cleanSnippet = item.snippet.replace(/<[^>]*>?/gm, '');
           div.innerHTML = `<strong>${item.title}</strong><br><small style="color:#64748b;">${cleanSnippet.substring(0, 50)}...</small>`;
           
-          // 選択されたらプレビュー確認画面（モーダル）を開く
           div.onclick = () => {
             resultsContainer.innerHTML = '';
             document.getElementById('searchInput').value = '';
@@ -315,10 +579,11 @@
       }
     }
 
-    // ③＆② モーダルを開く（新規追加確認 または 編集）
-    function openConfirmModal(title = '', author = '', desc = '', memo = '', index = null) {
+    // モーダル操作
+    function openConfirmModal(title = '', author = '', desc = '', memo = '', category = '新規追加', index = null) {
       currentEditIndex = index;
       document.getElementById('modalTitle').textContent = index === null ? 'この内容で本棚に追加しますか？' : '本を編集';
+      document.getElementById('modalBookCategory').value = category;
       document.getElementById('modalBookTitle').value = title;
       document.getElementById('modalBookAuthor').value = author;
       document.getElementById('modalBookDesc').value = desc;
@@ -331,8 +596,8 @@
       currentEditIndex = null;
     }
 
-    // モーダルの保存ボタンを押したとき
     function saveModalData() {
+      const category = document.getElementById('modalBookCategory').value.trim() || 'その他';
       const title = document.getElementById('modalBookTitle').value.trim();
       const author = document.getElementById('modalBookAuthor').value.trim();
       const desc = document.getElementById('modalBookDesc').value.trim();
@@ -343,13 +608,11 @@
         return;
       }
 
-      const bookData = { title, author, desc, memo };
+      const bookData = { category, title, author, desc, memo };
 
       if (currentEditIndex === null) {
-        // 新規追加
         books.unshift(bookData);
       } else {
-        // ② 既存データの更新
         books[currentEditIndex] = bookData;
       }
 
@@ -357,13 +620,11 @@
       closeModal();
     }
 
-    // ② 既存の本を編集モーダルで開く
     function editBook(index) {
       const b = books[index];
-      openConfirmModal(b.title, b.author || '', b.desc || '', b.memo || '', index);
+      openConfirmModal(b.title, b.author || '', b.desc || '', b.memo || '', b.category || 'その他', index);
     }
 
-    // 本の削除
     function deleteBook(index) {
       if (confirm('この本を本棚から削除しますか？')) {
         books.splice(index, 1);
@@ -371,19 +632,24 @@
       }
     }
 
-    // 保存と描画
+    function resetToDefault() {
+      if (confirm('初期のリスト（232冊）の状態に戻しますか？（自分で追加・編集した内容もリセットされます）')) {
+        books = defaultBooks;
+        saveAndRender();
+      }
+    }
+
     function saveAndRender() {
       localStorage.setItem('my_books', JSON.stringify(books));
       renderBooks();
     }
 
-    // 画面の更新
     function renderBooks() {
       const container = document.getElementById('bookList');
       container.innerHTML = '';
 
       if (books.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#64748b; margin-top:32px;">本棚は空です。上から検索して追加してみましょう！</p>';
+        container.innerHTML = '<p style="text-align:center; color:#64748b; margin-top:32px;">本棚は空です。</p>';
         return;
       }
 
@@ -391,9 +657,10 @@
         const card = document.createElement('div');
         card.className = 'book-card';
         card.innerHTML = `
+          ${b.category ? `<span class="book-category">${escapeHtml(b.category)}</span>` : ''}
           <div class="book-title">${escapeHtml(b.title)}</div>
           <div class="book-author">${escapeHtml(b.author || '著者不明')}</div>
-          ${b.desc ? `<div class="book-section-title">あらすじ</div><div class="book-desc">${escapeHtml(b.desc)}</div>` : ''}
+          ${b.desc ? `<div class="book-section-title">あらすじ・概要</div><div class="book-desc">${escapeHtml(b.desc)}</div>` : ''}
           ${b.memo ? `<div class="book-section-title">感想・メモ</div><div class="book-memo">${escapeHtml(b.memo)}</div>` : ''}
           <div class="card-actions">
             <button class="btn-edit" onclick="editBook(${index})">編集</button>
