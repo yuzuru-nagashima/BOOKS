@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>蔵書帖 － マイ本棚</title>
+
+<!-- Safari ホーム画面追加用アイコン・設定 -->
+<link rel="apple-touch-icon" href="https://loosedrawing.com/assets/media/illustrations/png/435.png">
+<link rel="icon" href="https://loosedrawing.com/assets/media/illustrations/png/435.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="蔵書帖">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FAF7F0">
 <style>
   :root{
     --paper:#FAF7F0;
@@ -833,6 +842,20 @@ function closeModal(){
 searchBookBtn.addEventListener("click", searchBook);
 newTitleInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); searchBook(); } });
 
+// 検索クエリを何パターンか試し、都度ヒットしたものをすべて集めてから
+// もっとも一致度の高い候補を選ぶ（有名作品の取りこぼしを防ぐ）
+async function fetchVolumes(query, opts){
+  const params = new URLSearchParams();
+  params.set("q", query);
+  params.set("maxResults", "10");
+  if(opts && opts.lang) params.set("langRestrict", "ja");
+  const url = "https://www.googleapis.com/books/v1/volumes?" + params.toString();
+  const res = await fetch(url);
+  if(!res.ok) return [];
+  const data = await res.json();
+  return data.items || [];
+}
+
 async function searchBook(){
   const q = newTitleInput.value.trim();
   if(!q){ searchStatus.textContent = "作品名を入力してください。"; return; }
@@ -840,36 +863,33 @@ async function searchBook(){
   searchResultArea.style.display = "none";
   confirmAddBtn.disabled = true;
 
+  // クエリの表記ゆれ対策：中黒・空白・全角記号などを揺らしたバリエーションも用意
+  const bare = q.replace(/[『』「」]/g, "");
+  const queryVariants = Array.from(new Set([q, bare]));
+
+  let allItems = [];
   try{
-    const url = "https://www.googleapis.com/books/v1/volumes?q=" +
-      encodeURIComponent("intitle:" + q) + "&maxResults=5&langRestrict=ja";
-    const res = await fetch(url);
-    const data = await res.json();
-    const item = pickBestMatch(data.items, q);
-
-    if(!item){
-      searchStatus.textContent = "該当する本が見つかりませんでした。著者・あらすじを直接入力してください。";
-      resultAuthor.value = "";
-      resultSynopsis.value = "";
-      resultCover.src = "";
-      searchResultArea.style.display = "block";
-      confirmAddBtn.disabled = false;
-      return;
+    for(const variant of queryVariants){
+      // 1) 日本語限定・完全一致寄り
+      let items = await fetchVolumes(`intitle:"${variant}"`, {lang:true});
+      allItems.push(...items);
+      if(items.length === 0){
+        // 2) 日本語限定・ゆるい一致
+        items = await fetchVolumes(variant, {lang:true});
+        allItems.push(...items);
+      }
+      if(allItems.length === 0){
+        // 3) 言語制限なし・完全一致寄り
+        items = await fetchVolumes(`intitle:"${variant}"`, {lang:false});
+        allItems.push(...items);
+      }
+      if(allItems.length === 0){
+        // 4) 言語制限なし・ゆるい一致（最後の手段）
+        items = await fetchVolumes(variant, {lang:false});
+        allItems.push(...items);
+      }
+      if(allItems.length > 0) break;
     }
-
-    const info = item.volumeInfo || {};
-    resultAuthor.value = (info.authors || []).join("、") || "";
-    resultSynopsis.value = (info.description || "").replace(/<[^>]+>/g,"").slice(0, 300);
-    if(info.imageLinks && info.imageLinks.thumbnail){
-      resultCover.src = info.imageLinks.thumbnail.replace("http://","https://");
-      resultCover.style.display = "block";
-    } else {
-      resultCover.src = "";
-      resultCover.style.display = "none";
-    }
-    searchStatus.textContent = `「${info.title || q}」が見つかりました。内容を確認して登録してください。`;
-    searchResultArea.style.display = "block";
-    confirmAddBtn.disabled = false;
   }catch(err){
     console.error(err);
     searchStatus.textContent = "検索に失敗しました（通信環境をご確認ください）。手動で入力できます。";
@@ -877,20 +897,78 @@ async function searchBook(){
     resultSynopsis.value = "";
     searchResultArea.style.display = "block";
     confirmAddBtn.disabled = false;
+    return;
   }
+
+  // 重複除去
+  const seen = new Set();
+  allItems = allItems.filter(it=>{
+    if(!it.id || seen.has(it.id)) return false;
+    seen.add(it.id); return true;
+  });
+
+  const item = pickBestMatch(allItems, q);
+
+  if(!item){
+    searchStatus.textContent = "該当する本が見つかりませんでした。お手数ですが著者・あらすじを直接入力してください。";
+    resultAuthor.value = "";
+    resultSynopsis.value = "";
+    resultCover.src = "";
+    resultCover.style.display = "none";
+    searchResultArea.style.display = "block";
+    confirmAddBtn.disabled = false;
+    return;
+  }
+
+  const info = item.volumeInfo || {};
+  resultAuthor.value = (info.authors || []).join("、") || "";
+  resultSynopsis.value = (info.description || "").replace(/<[^>]+>/g,"").slice(0, 300);
+  if(info.imageLinks && info.imageLinks.thumbnail){
+    resultCover.src = info.imageLinks.thumbnail.replace("http://","https://");
+    resultCover.style.display = "block";
+  } else {
+    resultCover.src = "";
+    resultCover.style.display = "none";
+  }
+  if(!resultAuthor.value && !resultSynopsis.value){
+    searchStatus.textContent = `「${info.title || q}」らしき本は見つかりましたが、著者・あらすじの情報がありませんでした。内容を確認・入力してください。`;
+  } else {
+    searchStatus.textContent = `「${info.title || q}」が見つかりました。内容を確認して登録してください。`;
+  }
+  searchResultArea.style.display = "block";
+  confirmAddBtn.disabled = false;
 }
 
 function pickBestMatch(items, query){
   if(!items || items.length===0) return null;
-  const norm = s => (s||"").replace(/[\s　]/g,"").toLowerCase();
+  const norm = s => (s||"").replace(/[\s　『』「」―—\-:：・,、.。]/g,"").toLowerCase();
   const q = norm(query);
-  // exact title match first
-  let exact = items.find(it => norm(it.volumeInfo && it.volumeInfo.title) === q);
-  if(exact) return exact;
-  // otherwise item whose title contains the query
-  let contains = items.find(it => norm(it.volumeInfo && it.volumeInfo.title).includes(q));
-  if(contains) return contains;
-  return items[0];
+
+  const score = (it)=>{
+    const info = it.volumeInfo || {};
+    const t = norm(info.title);
+    const sub = norm(info.subtitle);
+    const full = norm((info.title||"") + (info.subtitle||""));
+    let s = 0;
+    if(t === q || full === q) s += 100;
+    else if(t.startsWith(q) || q.startsWith(t)) s += 60;
+    else if(full.includes(q) || q.includes(t)) s += 40;
+    else if(t.includes(q) || q.includes(t)) s += 20;
+    else s -= 50; // タイトルがほぼ無関係なら大きく減点
+
+    if(info.description) s += 15;
+    if(info.authors && info.authors.length) s += 10;
+    if(info.language === "ja") s += 8;
+    if(info.printType === "BOOK") s += 5;
+    if(info.imageLinks && info.imageLinks.thumbnail) s += 2;
+    return s;
+  };
+
+  const ranked = items.map(it=>({it, s: score(it)})).sort((a,b)=>b.s - a.s);
+  if(ranked.length === 0) return null;
+  // 明らかに無関係（スコアが低すぎる）候補は返さない
+  if(ranked[0].s < 0) return null;
+  return ranked[0].it;
 }
 
 confirmAddBtn.addEventListener("click", ()=>{
