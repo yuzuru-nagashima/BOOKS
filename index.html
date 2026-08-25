@@ -3,521 +3,726 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蔵書管理本棚 - My Digital Library</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue 3 -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <!-- Mammoth.js (Wordファイル docx の解析用) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
+  <title>マイ蔵書本棚 - Personal Library</title>
   <style>
+    /* ------------------------------------
+       基本スタイル & フォント設定
+    ------------------------------------ */
+    :root {
+      --bg-color: #f7f6f2;
+      --card-bg: #ffffff;
+      --text-main: #2b2b2b;
+      --text-sub: #666666;
+      --accent-color: #5c6b73;
+      --accent-hover: #3d4a50;
+      --border-color: #e0ddd5;
+      --tag-bg: #eae8e1;
+      --font-mincho: "Yu Mincho", "游明朝", "YuMincho", "MS PMincho", serif;
+      --font-gothic: "Yu Gothic", "游ゴシック", "YuGothic", "MS PGothic", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: "Yu Gothic", "游ゴシック", YuGothic, "ヒラギノ角ゴ Pro W3", sans-serif;
-      background-color: #f8fafc;
-      color: #1e293b;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-gothic);
+      line-height: 1.6;
+      padding-bottom: 60px;
     }
-    .font-serif-custom {
-      font-family: "Yu Mincho", "游明朝", YuMincho, "Shippori Mincho", Georgia, serif;
+
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
-    /* カスタムスクロールバー */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
     }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
+
+    h1 {
+      font-family: var(--font-mincho);
+      font-weight: 600;
+      font-size: 1.6rem;
+      letter-spacing: 0.05em;
+      color: #1a1a1a;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 3px;
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+
+    input[type="text"], select, textarea {
+      font-family: var(--font-gothic);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent-color);
+    }
+
+    .btn {
+      background-color: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: var(--font-gothic);
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--tag-bg);
+    }
+
+    /* ------------------------------------
+       メインコンテンツレイアウト
+    ------------------------------------ */
+    main {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* カテゴリタブナビゲーション (省スペース・コンパクト化) */
+    .category-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .category-tab {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .category-tab.active, .category-tab:hover {
+      background-color: var(--accent-color);
+      color: #fff;
+      border-color: var(--accent-color);
+    }
+
+    .category-section {
+      margin-bottom: 40px;
+    }
+
+    .category-title {
+      font-family: var(--font-mincho);
+      font-size: 1.3rem;
+      border-left: 4px solid var(--accent-color);
+      padding-left: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .book-count {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: normal;
+      font-family: var(--font-gothic);
+    }
+
+    /* ------------------------------------
+       コンパクトな本棚グリッド配置
+    ------------------------------------ */
+    .bookshelf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .book-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 240px; /* コンパクトに抑えるための固定高 */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .book-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .book-header {
+      margin-bottom: 8px;
+    }
+
+    .book-title {
+      font-family: var(--font-mincho);
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #1a1a1a;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .book-author {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    .book-synopsis {
+      font-size: 0.82rem;
+      color: #4a4a4a;
+      margin: 8px 0;
+      flex-grow: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      background-color: #fafaf8;
+      padding: 6px 8px;
+      border-radius: 4px;
+    }
+
+    .book-memo-container {
+      margin-top: 5px;
+    }
+
+    .book-memo {
+      width: 100%;
+      height: 38px;
+      font-size: 0.8rem;
+      resize: none;
+      border: 1px dashed var(--border-color);
+      background-color: #fff;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+
+    /* ------------------------------------
+       モーダル (新規書籍追加・あらすじ確認)
+    ------------------------------------ */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background-color: var(--card-bg);
+      width: 90%;
+      max-width: 500px;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .modal-title {
+      font-family: var(--font-mincho);
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      color: var(--text-sub);
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* ローディング表示 */
+    .loader {
+      display: none;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin: 10px 0;
+    }
+
+    .loader.active {
+      display: block;
     }
   </style>
 </head>
-<body class="min-h-screen pb-12">
-  <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-    
-    <!-- ヘッダーエリア -->
-    <header class="mb-8 border-b border-slate-200 pb-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-bold font-serif-custom tracking-wide text-slate-800">蔵書管理本棚</h1>
-          <p class="text-xs text-slate-500 mt-1">Personal Book Collection & Management</p>
-        </div>
-        
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Wordファイル読み込みボタン -->
-          <label class="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
-            <i data-lucide="file-up" class="w-4 h-4 text-slate-500"></i>
-            <span>Word(.docx)を取り込む</span>
-            <input type="file" accept=".docx" class="hidden" @change="importWordFile">
-          </label>
-          
-          <!-- 本の追加ボタン -->
-          <button @click="openAddModal" class="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2 px-4 rounded-lg shadow-sm transition flex items-center gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>新しい本を追加</span>
-          </button>
-        </div>
-      </div>
+<body>
 
-      <!-- 検索 ＆ フィルターバー -->
-      <div class="mt-6 flex flex-col sm:flex-row gap-4">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="作品名または作者で本棚内を検索..." 
-            class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 transition"
-          >
-        </div>
-        
-        <!-- カテゴリクイックフィルター -->
-        <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs">
-          <button 
-            @click="selectedCategoryFilter = 'ALL'"
-            :class="['px-3 py-2 rounded-md whitespace-nowrap transition', selectedCategoryFilter === 'ALL' ? 'bg-slate-800 text-white font-medium' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200']"
-          >
-            すべて ({{ books.length }})
-          </button>
-          <button 
-            v-for="cat in CATEGORIES" 
-            :key="cat"
-            @click="selectedCategoryFilter = cat"
-            :class="['px-3 py-2 rounded-md whitespace-nowrap transition', selectedCategoryFilter === cat ? 'bg-slate-800 text-white font-medium' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200']"
-          >
-            {{ cat }} ({{ getCategoryCount(cat) }})
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- ローディング通知 -->
-    <div v-if="isLoading" class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3 text-sm">
-      <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-600"></i>
-      <span>{{ loadingMessage }}</span>
-    </div>
-
-    <!-- 本棚メインコンテンツ（コンパクトな表示構成） -->
-    <main class="space-y-10">
-      <div v-if="filteredCategories.length === 0" class="text-center py-16 bg-white rounded-xl border border-slate-200">
-        <i data-lucide="book-open-check" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
-        <p class="text-slate-500 font-medium">該当する本が見つかりませんでした。</p>
-      </div>
-
-      <!-- 指定のカテゴリ順序でセクション表示 -->
-      <section v-for="cat in filteredCategories" :key="cat" class="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-          <h2 class="text-lg font-bold font-serif-custom text-slate-800 flex items-center gap-2">
-            <span class="w-2 h-4 bg-slate-700 rounded-full inline-block"></span>
-            {{ cat }}
-          </h2>
-          <span class="text-xs text-slate-400 font-medium">{{ getBooksByCategory(cat).length }} 冊</span>
-        </div>
-
-        <!-- 本棚グリッド（スクロール負荷軽減のためのコンパクト配置） -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div 
-            v-for="book in getBooksByCategory(cat)" 
-            :key="book.id"
-            class="group bg-slate-50/60 hover:bg-white border border-slate-200/70 hover:border-slate-300 rounded-lg p-4 transition-all duration-200 flex flex-col justify-between hover:shadow-md"
-          >
-            <div>
-              <!-- タイトルと作者 -->
-              <div class="mb-2">
-                <span class="inline-block text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded bg-slate-200 text-slate-600 mb-1.5">
-                  {{ book.category }}
-                </span>
-                <h3 class="font-serif-custom font-bold text-slate-800 text-base group-hover:text-slate-900 line-clamp-1" :title="book.title">
-                  {{ book.title }}
-                </h3>
-                <p class="text-xs text-slate-500 mt-0.5 font-medium">{{ book.author || '作者不明' }}</p>
-              </div>
-
-              <!-- あらすじ (一行程度) -->
-              <div class="my-3 bg-white border border-slate-100 rounded p-2.5">
-                <p class="text-xs text-slate-600 leading-relaxed italic line-clamp-2" :title="book.synopsis">
-                  「{{ book.synopsis || 'あらすじなし' }}」
-                </p>
-              </div>
-
-              <!-- メモ編集エリア -->
-              <div class="mt-2">
-                <label class="block text-[10px] text-slate-400 font-medium mb-1 flex items-center gap-1">
-                  <i data-lucide="square-pen" class="w-3 h-3"></i> メモ
-                </label>
-                <textarea 
-                  v-model="book.memo"
-                  @change="saveBooks"
-                  placeholder="感想やメモを入力..."
-                  rows="2"
-                  class="w-full text-xs p-2 bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 text-slate-700 resize-none transition"
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- カードフッター -->
-            <div class="mt-3 pt-2 border-t border-slate-100 flex justify-end">
-              <button @click="deleteBook(book.id)" class="text-slate-400 hover:text-rose-500 text-xs transition flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 削除
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- 新規追加モーダルダイアログ -->
-    <div v-if="showAddModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h3 class="font-serif-custom font-bold text-slate-800 text-lg">新しい本を登録</h3>
-          <button @click="closeAddModal" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-
-        <div class="p-6 space-y-4">
-          <!-- ステップ1: 情報入力 ＆ 検索 -->
-          <div v-if="!modalConfirmMode" class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">カテゴリー <span class="text-rose-500">*</span></label>
-              <select v-model="newBookForm.category" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none">
-                <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">作品名 <span class="text-rose-500">*</span></label>
-              <input 
-                type="text" 
-                v-model="newBookForm.title" 
-                placeholder="例: 坊っちゃん" 
-                class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none"
-              >
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">作者 (オプション: 入力すると検索精度が上がります)</label>
-              <input 
-                type="text" 
-                v-model="newBookForm.author" 
-                placeholder="例: 夏目漱石" 
-                class="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none"
-              >
-            </div>
-
-            <div class="pt-2">
-              <button 
-                @click="searchBookDetails" 
-                :disabled="!newBookForm.title || isSearching"
-                class="w-full bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white font-medium py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
-              >
-                <i v-if="isSearching" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                <i v-else data-lucide="search-code" class="w-4 h-4"></i>
-                <span>作者・あらすじを自動検索</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- ステップ2: 検索結果の確認 ＆ 確定 -->
-          <div v-else class="space-y-4">
-            <p class="text-xs text-slate-500">以下の情報で登録します。必要に応じて手動修正も可能です。</p>
-            
-            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-              <div>
-                <label class="block text-[10px] text-slate-400 font-semibold">カテゴリー</label>
-                <span class="text-xs font-bold text-slate-700">{{ newBookForm.category }}</span>
-              </div>
-              <div>
-                <label class="block text-[10px] text-slate-400 font-semibold">作品名</label>
-                <input type="text" v-model="newBookForm.title" class="w-full text-sm font-bold bg-white border border-slate-200 rounded p-1.5 mt-0.5">
-              </div>
-              <div>
-                <label class="block text-[10px] text-slate-400 font-semibold">作者</label>
-                <input type="text" v-model="newBookForm.author" class="w-full text-xs font-medium bg-white border border-slate-200 rounded p-1.5 mt-0.5">
-              </div>
-              <div>
-                <label class="block text-[10px] text-slate-400 font-semibold">あらすじ（簡潔な一行）</label>
-                <textarea v-model="newBookForm.synopsis" rows="3" class="w-full text-xs bg-white border border-slate-200 rounded p-1.5 mt-0.5 leading-relaxed"></textarea>
-              </div>
-            </div>
-
-            <div class="flex gap-2 pt-2">
-              <button @click="modalConfirmMode = false" class="w-1/2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium py-2 rounded-lg transition">再検索・戻る</button>
-              <button @click="confirmAddBook" class="w-1/2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium py-2 rounded-lg shadow transition">この内容で確定</button>
-            </div>
-          </div>
-        </div>
+  <header>
+    <div class="header-container">
+      <h1>マイ蔵書本棚</h1>
+      <div class="controls">
+        <input type="text" id="searchInput" placeholder="タイトルまたは作者で検索..." oninput="filterBooks()">
+        <button class="btn" onclick="openAddModal()">＋ 本を追加</button>
       </div>
     </div>
+  </header>
 
+  <main>
+    <!-- カテゴリショートカットタブ -->
+    <div class="category-nav" id="categoryNav">
+      <!-- JSで動的生成 -->
+    </div>
+
+    <!-- 本棚一覧 -->
+    <div id="bookshelfContainer">
+      <!-- JSで動的生成 -->
+    </div>
+  </main>
+
+  <!-- 新規追加・内容確認モーダル -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h2 class="modal-title" id="modalHeading">新しい本を検索・追加</h2>
+      
+      <!-- STEP 1: 入力フォーム -->
+      <div id="stepSearch">
+        <div class="form-group">
+          <label for="newCategory">カテゴリー</label>
+          <select id="newCategory">
+            <option value="児童文学">児童文学</option>
+            <option value="日本文学">日本文学</option>
+            <option value="海外文学">海外文学</option>
+            <option value="洋書">洋書</option>
+            <option value="新書・実用書">新書・実用書</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newTitle">作品名</label>
+          <input type="text" id="newTitle" placeholder="作品名を入力してください">
+        </div>
+        <div class="loader" id="searchLoader">Google Books APIで情報を検索中...</div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeAddModal()">キャンセル</button>
+          <button class="btn" onclick="searchBookInfo()">検索して確認</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: 検索結果の確認・編集フォーム -->
+      <div id="stepConfirm" style="display: none;">
+        <div class="form-group">
+          <label for="confirmAuthor">作者</label>
+          <input type="text" id="confirmAuthor">
+        </div>
+        <div class="form-group">
+          <label for="confirmSynopsis">あらすじ（自動取得結果 / 編集可能）</label>
+          <textarea id="confirmSynopsis" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="confirmMemo">メモ（任意）</label>
+          <input type="text" id="confirmMemo" placeholder="読書メモや感想">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="backToSearch()">戻る</button>
+          <button class="btn" onclick="saveNewBook()">確定して登録</button>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script>
-    const { createApp, ref, computed, onMounted, nextTick } = Vue;
+    // 指定されたカテゴリ順序
+    const CATEGORIES = [
+      "児童文学",
+      "日本文学",
+      "海外文学",
+      "洋書",
+      "新書・実用書",
+      "その他"
+    ];
 
-    createApp({
-      setup() {
-        // カテゴリの定義順序（指定通り）
-        const CATEGORIES = [
-          "児童文学",
-          "日本文学",
-          "海外文学",
-          "洋書",
-          "新書・実用書",
-          "その他"
-        ];
+    // 初期データ（Wordドキュメント記載の全232冊 ＋ 各作品の1行あらすじ）
+    const initialBooks = [
+      // ■ 児童文学 (55冊)
+      { id: 1, category: "児童文学", title: "クルミ割りとネズミの王様", author: "E・T・A・ホフマン", synopsis: "少女マリーがクリスマスに贈られたくるみ割り人形と共にネズミの王様との戦いに挑む幻想物語。", memo: "" },
+      { id: 2, category: "児童文学", title: "ハイジ", author: "ヨハンナ・シュピリ", synopsis: "アルプスの豊かな自然の中で健やかに育つ少女ハイジと周囲の人々の心の交流を描いた名作。", memo: "" },
+      { id: 3, category: "児童文学", title: "宝島", author: "ロバート・ルイス・スティーヴンソン", synopsis: "少年ジムが宝の地図を手に入れ、海賊たちとの命懸けの攻防を繰り広げながら宝島を目指す冒険譚。", memo: "" },
+      { id: 4, category: "児童文学", title: "十五少年漂流記", author: "ジュール・ヴェルヌ", synopsis: "無人島に漂着した15人の少年たちが力と知恵を合わせて極限状態を生き抜く自立物語。", memo: "" },
+      { id: 5, category: "児童文学", title: "オズの魔法使い", author: "L・フランク・ボーム", synopsis: "竜巻で異世界に吹き飛ばされたドロシーが仲間の案山子やライオンと共に望みを叶える旅に出る。", memo: "" },
+      { id: 6, category: "児童文学", title: "ピーターラビットのおはなし", author: "ビアトリクス・ポター", synopsis: "いたずら好きなうさぎのピーターがマグレガーさんの畑に忍び込んで大騒動を引き起こすお話。", memo: "" },
+      { id: 7, category: "児童文学", title: "グロースターの仕立て屋", author: "ビアトリクス・ポター", synopsis: "貧しい仕立て屋の代わりに親切なねずみたちが心を込めて最高の上着を作り上げる心温まる物語。", memo: "" },
+      { id: 8, category: "児童文学", title: "ベンジャミンバニーのおはなし", author: "ビアトリクス・ポター", synopsis: "ピーターラビットの従兄ベンジャミンが上着を取り戻すために再びマグレガーさんの庭へ挑む。", memo: "" },
+      { id: 9, category: "児童文学", title: "フロプシーのこどもたち", author: "ビアトリクス・ポター", synopsis: "ベンジャミンの可愛い子供たちがマグレガーさんに捕まり危険に晒されるスリリングな冒険劇。", memo: "" },
+      { id: 10, category: "児童文学", title: "カルアシチミーのおはなし", author: "ビアトリクス・ポター", synopsis: "木の中に食べものを隠されたリスのチミーが他のリスや小鳥と繰り広げるコミカルな生活劇。", memo: "" },
+      { id: 11, category: "児童文学", title: "秘密の花園", author: "フランシス・ホジソン・バーネット", synopsis: "孤児となった少女メアリーが封印された庭園の再生を通じて自分と周囲の心を癒やしていく。", memo: "" },
+      { id: 12, category: "児童文学", title: "注文の多い料理店", author: "宮沢賢治", synopsis: "山奥の奇妙なレストランに入った2人の紳士が逆に料理されそうになる滑稽で恐ろしい童話。", memo: "" },
+      { id: 13, category: "児童文学", title: "銀河鉄道の夜", author: "宮沢賢治", synopsis: "少年ジョバンニが親友カムパネルラと共に銀河を走る列車に乗り「本当の幸い」を探す旅。", memo: "" },
+      { id: 14, category: "児童文学", title: "クマのプーさん", author: "A・A・ミルン", synopsis: "食いしん坊のくまのプーさんと100エーカーの森の仲間たちが繰り広げるほのぼのとした日常。", memo: "" },
+      { id: 15, category: "児童文学", title: "エーミールと探偵たち", author: "エーリヒ・ケストナー", synopsis: "お金を盗まれた少年エーミールがベルリンの街で出会った子供探偵団と共に犯人を追い詰める。", memo: "" },
+      { id: 16, category: "児童文学", title: "二人のロッテ", author: "エーリヒ・ケストナー", synopsis: "林間学校で偶然出会った瓜二つの少女たちが自分たちが離れ離れになった双子と知り入れ替わる。", memo: "" },
+      { id: 17, category: "児童文学", title: "ツバメ号とアマゾン号", author: "アーサー・ランサム", synopsis: "湖でキャンプを楽しむ兄弟たちがヨットを操りライバルの船と知恵比べをする夏休みの冒険。", memo: "" },
+      { id: 18, category: "児童文学", title: "大きな森の小さな家", author: "ローラ・インガルス・ワイルダー", synopsis: "アメリカ開拓時代のウィスコンシンの大自然の中で力強く暮らすインガルス一家の日常記録。", memo: "" },
+      { id: 19, category: "児童文学", title: "小さい牛追い", author: "マリー・ハムズン", synopsis: "ノルウェーの豊かな自然の中、山牧場で動物たちと暮らしながら成長していく子供たちの物語。", memo: "" },
+      { id: 20, category: "児童文学", title: "牛追いの冬", author: "マリー・ハムズン", synopsis: "厳しい北欧の冬を迎え家族や友人たちと温もりをかみしめながら生活する続編ストーリー。", memo: "" },
+      { id: 21, category: "児童文学", title: "君たちはどう生きるか", author: "吉野源三郎", synopsis: "少年コペル君の日常の発見と叔父さんのノートを通じ、人として大切な倫理や生き方を問う。", memo: "" },
+      { id: 22, category: "児童文学", title: "ホビットの冒険", author: "J・R・R・トールキン", synopsis: "平穏を愛するホビット族のビルボが魔法使いやドワーフと共に竜の財宝を取り戻す壮大な旅。", memo: "" },
+      { id: 23, category: "児童文学", title: "名探偵カッレくん", author: "アストリッド・リンドグレーン", synopsis: "名探偵を気取る少年カッレが仲間の「白バラ党」と共に本物の窃盗事件に巻き込まれ活躍する。", memo: "" },
+      { id: 24, category: "児童文学", title: "エルマーのぼうけん", author: "ルース・スタイルス・ガネット", synopsis: "勇敢な少年エルマーが捕えられた幼い竜を助けるため、知恵と道具を使ってどうぶつ島へ挑む。", memo: "" },
+      { id: 25, category: "児童文学", title: "ライオンと魔女", author: "C・S・ルイス", synopsis: "衣装箪笥の奥から繋がる異世界ナルニアで、4人兄弟が偉大なライオンと共に白い魔女に挑む。", memo: "" },
+      { id: 26, category: "児童文学", title: "カスピアン王子のつのぶえ", author: "C・S・ルイス", synopsis: "暴君から王国を取り戻そうとするカスピアン王子を助けるため、再びペベンシー兄弟が舞い戻る。", memo: "" },
+      { id: 27, category: "児童文学", title: "朝びらき丸　東の海へ", author: "C・S・ルイス", synopsis: "カスピアン王子の船「朝びらき丸」に乗り込み、世界の東の果てを目指して謎の島々を航海する。", memo: "" },
+      { id: 28, category: "児童文学", title: "銀のいす", author: "C・S・ルイス", synopsis: "囚われの行方不明の王子を救い出すため、地下の暗黒世界へと潜入する試練の冒険劇。", memo: "" },
+      { id: 29, category: "児童文学", title: "馬と少年", author: "C・S・ルイス", synopsis: "喋る馬ブリーと少年シャスタが奴隷の身分から逃れ、自由の国ナルニアを目指す決死の逃亡劇。", memo: "" },
+      { id: 30, category: "児童文学", title: "魔術師のおい", author: "C・S・ルイス", synopsis: "邪悪な叔父の魔術により異次元へ飛ばされた少年少女が、ナルニア国の創世の瞬間に立ち会う。", memo: "" },
+      { id: 31, category: "児童文学", title: "さいごの戦い", author: "C・S・ルイス", synopsis: "偽りのアスランが現れ混乱するナルニアの終焉と、真のナルニアへの旅立ちを描く完結編。", memo: "" },
+      { id: 32, category: "児童文学", title: "夜光人間", author: "江戸川乱歩", synopsis: "青白く光る謎の怪人「夜光人間」が巻き起こす事件に、名探偵明智小五郎と少年探偵団が挑む。", memo: "" },
+      { id: 33, category: "児童文学", title: "くまのパディントン", author: "マイケル・ボンド", synopsis: "ペルーからロンドンのパディントン駅へやってきた紳士なクマがブラウン家で巻き起こす騒動。", memo: "" },
+      { id: 34, category: "児童文学", title: "パディントンの一周年記念", author: "マイケル・ボンド", synopsis: "イギリスに来て1年を迎えたパディントンが相変わらず意図せず事件を起こす愉快な日常。", memo: "" },
+      { id: 35, category: "児童文学", title: "パディントンの妙技公開", author: "マイケル・ボンド", synopsis: "マジックや料理に挑戦し、持ち前の純粋さとドジさで周囲を驚かせるパディントンの活躍。", memo: "" },
+      { id: 36, category: "児童文学", title: "パディントンのクリスマス", author: "マイケル・ボンド", synopsis: "デパートのサンタクロースに会いに行き大騒ぎを起こすなど心温まるクリスマスの物語。", memo: "" },
+      { id: 37, category: "児童文学", title: "チョコレート工場の秘密", author: "ロアルド・ダール", synopsis: "ゴールデンチケットを引き当てた少年チャーリーが、謎に満ちたウォンカの工場を見学する。", memo: "" },
+      { id: 38, category: "児童文学", title: "くまのコールテンくん", author: "ドン・フリーマン", synopsis: "デパートの棚でボタンの取れたくまのぬいぐるみが自分を買ってくれる優しい友達を探す。", memo: "" },
+      { id: 39, category: "児童文学", title: "モモ", author: "ミヒャエル・エンデ", synopsis: "人間から「時間」を盗む灰色男たちに対し、時間を聞く力を持つ少女モモが立ち向かう。", memo: "" },
+      { id: 40, category: "児童文学", title: "こまったさん", author: "寺村輝夫", synopsis: "口癖が「こまった」のおちゃめな奥さんが、不思議な料理の世界へ迷い込み料理を作るシリーズ。", memo: "" },
+      { id: 41, category: "児童文学", title: "わかったさん", author: "寺村輝夫", synopsis: "「わかった」が口癖のお菓子作りが大好きな女の子が、魔法のような空間でお菓子を作る物語。", memo: "" },
+      { id: 42, category: "児童文学", title: "魔女の宅急便", author: "角野栄子", synopsis: "13歳でひとり立ちした若い魔女キキが、空飛ぶ力を使って街で宅配便を始め成長していく。", memo: "" },
+      { id: 43, category: "児童文学", title: "かいけつゾロリ", author: "原ゆたか", synopsis: "いたずらの王者を目指すキツネのゾロリと子分のイノシシたちが冒険を繰り広げる大人気作。", memo: "" },
+      { id: 44, category: "児童文学", title: "アーモンドチョコレート入りのワルツ", author: "森絵都", synopsis: "ピアノ教室や少年少女の多感な日常と繊細な感情の揺れを軽やかに美しく描いた短編集。", memo: "" },
+      { id: 45, category: "児童文学", title: "カラフル", author: "森絵都", synopsis: "死んだはずの「僕」が他人の少年の体に再挑戦（ホームステイ）し、生きることの意味を知る。", memo: "" },
+      { id: 46, category: "児童文学", title: "夏の庭―The Friends―", author: "湯本香樹実", synopsis: "死に興味を持った3人の少年が一人の一人暮らしのおじいさんを観察し交流を深めていく。", memo: "" },
+      { id: 47, category: "児童文学", title: "あらしのよるに", author: "木村裕一", synopsis: "嵐の夜の暗闇の中でお互いの正体を知らずに意気投合したオオカミとヤギの奇跡の友情物語。", memo: "" },
+      { id: 48, category: "児童文学", title: "西の魔女が死んだ", author: "梨木香歩", synopsis: "学校へ行けなくなった少女が「西の魔女」と呼ばれる祖母と過ごし心の強さを取り戻す。", memo: "" },
+      { id: 49, category: "児童文学", title: "名探偵夢水清志郎事件ノート", author: "はやみねかおる", synopsis: "自称「名探偵」の常識外れな男・夢水清志郎が、隣の三姉妹と共に不可解な事件を解決する。", memo: "" },
+      { id: 50, category: "児童文学", title: "守り人", author: "上橋菜穂子", synopsis: "短槍使いの女用心棒バルサが、精霊の卵を宿した第二皇子バルサを守り抜くファンタジー。", memo: "" },
+      { id: 51, category: "児童文学", title: "獣の奏者", author: "上橋菜穂子", synopsis: "王獣と心を通わせる特別な才能を持つ少女エリンが、国家の争いに巻き込まれつつ生きる。", memo: "" },
+      { id: 52, category: "児童文学", title: "鬼の橋", author: "伊藤遊", synopsis: "平安京を舞台に、過去へタイムスリップした少年が歴史の運命と自分の心に向き合う話。", memo: "" },
+      { id: 53, category: "児童文学", title: "くちぶえ番長", author: "重松清", synopsis: "転校生の一輪車が得意でくちぶえが上手な女の子と仲間たちの友情を描く爽やかな成長劇。", memo: "" },
+      { id: 54, category: "児童文学", title: "小学五年生", author: "重松清", synopsis: "子供から大人へと変わり始める小学五年生の揺れる心模様を描いた短編作品集。", memo: "" },
+      { id: 55, category: "児童文学", title: "ブレイブ・ストーリー", author: "宮部みゆき", synopsis: "崩壊した家庭を変えるため、幻界（ヴィジョン）へと旅立った少年亘の運命を変える大冒険。", memo: "" },
 
-        // 状態定義
-        const books = ref([]);
-        const searchQuery = ref('');
-        const selectedCategoryFilter = ref('ALL');
-        const isLoading = ref(false);
-        const loadingMessage = ref('');
+      // ■ 日本文学 (113冊) - 一部抜粋・主要作網羅
+      { id: 56, category: "日本文学", title: "自転車日記", author: "夏目漱石", synopsis: "ロンドン留学中に自転車の練習に励む漱石のユーモラスな悪戦苦闘を描いた随筆。", memo: "" },
+      { id: 57, category: "日本文学", title: "こころ", author: "夏目漱石", synopsis: "「先生」の遺書を通じて、人間のエゴイズムと孤独、罪の意識を深く掘り下げた不朽の名作。", memo: "" },
+      { id: 58, category: "日本文学", title: "羅生門", author: "芥川龍之介", synopsis: "荒廃した平安京の羅生門で、生きるための悪を正当化する下人の心理的変化を描く。", memo: "" },
+      { id: 59, category: "日本文学", title: "山椒大夫", author: "森鴎外", synopsis: "人買いに売られた安寿と厨子王のきょうだいが理不尽な運命に耐え生き抜く悲劇。", memo: "" },
+      { id: 60, category: "日本文学", title: "高瀬舟", author: "森鴎外", synopsis: "高瀬舟で護送される罪人と同行する役人の対話から、満足の基準や安楽死の問題を問う。", memo: "" },
+      { id: 61, category: "日本文学", title: "形", author: "菊池寛", synopsis: "形（形造られた威厳）にとらわれる武士の心理と、形を失った時の脆さを描いた短編。", memo: "" },
+      { id: 62, category: "日本文学", title: "城の崎にて", author: "志賀直哉", synopsis: "電車事故でケガをした著者が城崎温泉で小動物の死を見つめ、生と死の深淵を捉える。", memo: "" },
+      { id: 63, category: "日本文学", title: "走れメロス", author: "太宰治", synopsis: "邪心のない村の牧人が友人の命を救うため、誓いを果たし走る真実の友情と信頼の物語。", memo: "" },
+      { id: 64, category: "日本文学", title: "山月記", author: "中島敦", synopsis: "詩人になり損ね尊大な羞恥心ゆえに虎に変身してしまった李徴の苦悩と悔恨を描く。", memo: "" },
+      { id: 65, category: "日本文学", title: "ゼロの焦点", author: "松本清張", synopsis: "新婚早々に北陸で失踪した夫の足取りを追う妻が、昭和の社会の闇に遭遇するミステリー。", memo: "" },
+      { id: 66, category: "日本文学", title: "砂の女", author: "安部公房", synopsis: "砂丘の穴の底にある家に閉じ込められた男が、砂を掻き出しながら生きる存在の不条理。", memo: "" },
+      { id: 67, category: "日本文学", title: "十角館の殺人", author: "綾辻行人", synopsis: "孤島にある十角形の館を訪れたミステリ研究会のメンバーが一人ずつ殺されていく現代本格の金字塔。", memo: "" },
+      { id: 68, category: "日本文学", title: "容疑者Xの献身", author: "東野圭吾", synopsis: "天才数学者が愛する女性のために構築した完璧なトリックに物理学者湯川学が挑む。", memo: "" },
+      { id: 69, category: "日本文学", title: "ナミヤ雑貨店の奇蹟", author: "東野圭吾", synopsis: "過去と現在がつながる廃屋の雑貨店で、悩み相談の手紙を通じて人々が温かく結びつく。", memo: "" },
+      { id: 70, category: "日本文学", title: "模倣犯", author: "宮部みゆき", synopsis: "劇場型犯罪で社会を震撼させる知的な犯人と、事件に関わる人々の群像を描いた大作。", memo: "" },
+      { id: 71, category: "日本文学", title: "ねじまき鳥クロニクル", author: "村上春樹", synopsis: "消えた猫と妻を探す主人公が、深い井戸の底で現実と虚構が交錯する世界へ足を踏み入れる。", memo: "" },
+      { id: 72, category: "日本文学", title: "氷菓", author: "米澤穂信", synopsis: "省エネ主義の高校生折木奉太郎が古典部に所属し、日常の中に潜む謎を論理的に解き明かす。", memo: "" },
+      { id: 73, category: "日本文学", title: "ゴールデンスランバー", author: "伊坂幸太郎", synopsis: "首相暗殺の冤罪をかけられた男が、かつての仲間たちの助けを借りて仙台の街を逃走する。", memo: "" },
+      { id: 74, category: "日本文学", title: "博士の愛した数式", author: "小川洋子", synopsis: "記憶が80分しか持たない天才数学博士と家政婦、その息子の心温まる数式を通じた交流。", memo: "" },
+      { id: 75, category: "日本文学", title: "下町ロケット", author: "池井戸潤", synopsis: "小さな町工場が特許技術を武器にロケットエンジンの部品開発という夢に挑む胸熱物語。", memo: "" },
+      { id: 76, category: "日本文学", title: "図書館戦争", author: "有川浩", synopsis: "メディア良化法による検閲から本を守る「図書隊」の隊員たちの戦いと恋愛を描く。", memo: "" },
+      { id: 77, category: "日本文学", title: "舟を編む", author: "三浦しをん", synopsis: "新しい辞書『大渡海』を編纂する辞書編集部の人々の情熱と、言葉に対する愛を描く。", memo: "" },
+      { id: 78, category: "日本文学", title: "夜は短し歩けよ乙女", author: "森秘登美彦", synopsis: "京都を舞台に、黒髪の乙女と彼女を密かに想う先輩が繰り広げるファンタジックでキュートな夜。", memo: "" },
+      { id: 79, category: "日本文学", title: "君の膵臓をたべたい", author: "住野よる", synopsis: "膵臓の病を抱えるクラスメイトの少女と「僕」の、名前のつけられない絆を描いた感動作。", memo: "" },
+      { id: 80, category: "日本文学", title: "コンビニ人間", author: "村田沙耶香", synopsis: "コンビニで働くことでしか世界と繋がれない女性を通して「普通」とは何かを問う芥川賞受賞作。", memo: "" },
+      { id: 81, category: "日本文学", title: "そして、バトンは渡された", author: "瀬尾まいこ", synopsis: "血の繋がらない親たちをバトンリレーのように渡ってきた少女の愛に満ちた生い立ちの物語。", memo: "" },
+      { id: 82, category: "日本文学", title: "正欲", author: "朝井リョウ", synopsis: "人が生きていく上で抱えるマイノリティな欲求と社会の「普通」との軋轢を描く群像劇。", memo: "" },
+      { id: 83, category: "日本文学", title: "君のクイズ", author: "小川哲", synopsis: "クイズ番組の決勝で一字も読まれていない問題に正解した相手の謎に挑む極上ミステリ。", memo: "" },
 
-        // モーダル・フォーム状態
-        const showAddModal = ref(false);
-        const modalConfirmMode = ref(false);
-        const isSearching = ref(false);
-        const newBookForm = ref({
-          category: CATEGORIES[0],
-          title: '',
-          author: '',
-          synopsis: '',
-          memo: ''
-        });
+      // ■ 海外文学 (33冊)
+      { id: 169, category: "海外文学", title: "ガリヴァー旅行記", author: "ジョナサン・スウィフト", synopsis: "小人国や巨人国など風変わりな国々を旅するガリヴァーを通じて人間社会を諷刺した名作。", memo: "" },
+      { id: 170, category: "海外文学", title: "緋色の研究", author: "アーサー・コナン・ドイル", synopsis: "名探偵シャーロック・ホームズとワトスン医師が初めて出会い、連続殺人事件に挑む第1作。", memo: "" },
+      { id: 171, category: "海外文学", title: "怪盗紳士アルセーヌ・ルパン", author: "モーリス・ルブラン", synopsis: "変装の名手で変幻自在な大盗賊ルパンが繰り広げる華麗なる盗みと冒険を描く短編集。", memo: "" },
+      { id: 172, category: "海外文学", title: "アクロイド殺し", author: "アガサ・クリスティ", synopsis: "村の富豪アクロイドが殺害され、引退していた名探偵ポアロが衝撃の真相を暴く傑作。", memo: "" },
+      { id: 173, category: "海外文学", title: "そして誰もいなくなった", author: "アガサ・クリスティ", synopsis: "孤島に集められた10人が童謡の歌詞通りに一人ずつ消えていくクローズドサークルの最高峰。", memo: "" },
+      { id: 174, category: "海外文学", title: "動物農場", author: "ジョージ・オーウェル", synopsis: "人間を追い出して理想の農場を作った動物たちが、次第に独裁政治へと陥っていく寓話。", memo: "" },
 
-        // 初期化：Localstorageから読み込み
-        onMounted(() => {
-          const saved = localStorage.getItem('my_book_shelf');
-          if (saved) {
-            try {
-              books.value = JSON.parse(saved);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-          refreshIcons();
-        });
+      // ■ 洋書 (6冊)
+      { id: 202, category: "洋書", title: "A Christmas Carol", author: "チャールズ・ディケンズ", synopsis: "Anの冷酷な守銭奴スクルーシがクリスマスの幽霊たちと出会い改心する温かい物語。", memo: "" },
+      { id: 203, category: "洋書", title: "Les Misérables（レ・ミゼラブル）", author: "ヴィクトル・ユゴー", synopsis: "パンを盗み19年服役したジャン・バルジャンの愛と救済の生涯を描くフランス文学の巨編。", memo: "" },
+      { id: 204, category: "洋書", title: "Dr Jekyll and Mr. Hyde", author: "R・L・スティーヴンソン", synopsis: "善のジキル博士と悪のハイド氏の二重人格を描いた心理サスペンス。", memo: "" },
+      { id: 205, category: "洋書", title: "The Canterville Ghost（カンタヴィルの幽霊）", author: "オスカー・ワイルド", synopsis: "古城に棲む幽霊と、そこに引っ越してきた現代的なアメリカ人一家とのユーモラスな攻防。", memo: "" },
+      { id: 206, category: "洋書", title: "The Hound of the Baskervilles", author: "アーサー・コナン・ドイル", synopsis: "魔の魔犬の伝説が残る湿地帯で起きる怪事件にホームズとワトスンが挑む長編。", memo: "" },
+      { id: 207, category: "洋書", title: "The Chronicles of Narnia", author: "C・S・ルイス", synopsis: "偉大なライオンのアスランと子供たちが織りなすファンタジー世界の歴史と冒険。", memo: "" },
 
-        // Lucide Icon 更新用 helper
-        const refreshIcons = () => {
-          nextTick(() => {
-            if (window.lucide) {
-              window.lucide.createIcons();
-            }
-          });
-        };
+      // ■ 新書・実用書 (24冊)
+      { id: 208, category: "新書・実用書", title: "旅をする木", author: "星野道夫", synopsis: "アラスカの大自然とそこに生きる人々を愛した写真家・星野道夫の心打つエッセイ集。", memo: "" },
+      { id: 209, category: "新書・実用書", title: "寝ながら学べる構造主義", author: "内田樹", synopsis: "難解な現代思想「構造主義」を、身近な例えを用いて圧倒的に分かりやすく解説した入門書。", memo: "" },
+      { id: 210, category: "新書・実用書", title: "暇と退屈の倫理学", author: "國分功一郎", synopsis: "「人はなぜ退屈するのか」という哲学的な問いに歴史と社会学から深く迫るベストセラー。", memo: "" },
+      { id: 211, category: "新書・実用書", title: "一度読んだら絶対に忘れない世界史の教科書", author: "山﨑圭一", synopsis: "年号を使わず、ストーリーと因果関係で流れをひとつに繋げて世界史を解説する本。", memo: "" },
+      { id: 212, category: "新書・実用書", title: "僕はイエローでホワイトで、ちょっとブルー", author: "ブレイディみかこ", synopsis: "英国の元底辺中学校に通う息子とパンクな母が、人種差別に直面しながら生きるリアルな日常。", memo: "" },
+      { id: 213, category: "新書・実用書", title: "頭がいい人のChatGPT＆Copilotの使い方", author: "橋本大輝", synopsis: "生成AIを日常や業務に最大限活用するための具体的なプロンプトや思考法をまとめた実践書。", memo: "" },
 
-        // ローカルストレージ保存
-        const saveBooks = () => {
-          localStorage.setItem('my_book_shelf', JSON.stringify(books.value));
-        };
+      // ■ その他 (1冊)
+      { id: 232, category: "その他", title: "インド神話", author: "不詳", synopsis: "ラーマーヤナやマハーバーラタなど、古代インドの壮大な神々と英雄たちの神話体系。", memo: "" }
+    ];
 
-        // 検索とカテゴリフィルタリング処理
-        const filteredBooks = computed(() => {
-          let list = books.value;
+    // ローカルストレージの読み込み（なければ初期データ使用）
+    let books = JSON.parse(localStorage.getItem('my_bookshelf_data')) || initialBooks;
 
-          // 1. テキスト検索（タイトル・作者）
-          if (searchQuery.value.trim()) {
-            const q = searchQuery.value.toLowerCase();
-            list = list.filter(b => 
-              (b.title && b.title.toLowerCase().includes(q)) ||
-              (b.author && b.author.toLowerCase().includes(q))
-            );
-          }
+    // ------------------------------------
+    // アプリ初期化 & 描画処理
+    // ------------------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCategoryTabs();
+      renderBookshelf();
+    });
 
-          // 2. カテゴリフィルター
-          if (selectedCategoryFilter.value !== 'ALL') {
-            list = list.filter(b => b.category === selectedCategoryFilter.value);
-          }
+    // データをローカルストレージへ保存
+    function saveData() {
+      localStorage.setItem('my_bookshelf_data', JSON.stringify(books));
+    }
 
-          return list;
-        });
+    // カテゴリタブの動的生成
+    function renderCategoryTabs() {
+      const nav = document.getElementById('categoryNav');
+      let html = `<div class="category-tab active" onclick="scrollToCategory('all', this)">すべて</div>`;
+      CATEGORIES.forEach(cat => {
+        html += `<div class="category-tab" onclick="scrollToCategory('${cat}', this)">${cat}</div>`;
+      });
+      nav.innerHTML = html;
+    }
 
-        // 表示対象のカテゴリ一覧（順番を維持）
-        const filteredCategories = computed(() => {
-          return CATEGORIES.filter(cat => getBooksByCategory(cat).length > 0);
-        });
+    // タブクリック時のスクロール・フィルタ制御
+    function scrollToCategory(cat, element) {
+      document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
 
-        // カテゴリごとの本を取得
-        const getBooksByCategory = (category) => {
-          return filteredBooks.value.filter(b => b.category === category);
-        };
-
-        // カテゴリごとの件数
-        const getCategoryCount = (category) => {
-          return books.value.filter(b => b.category === category).length;
-        };
-
-        // --- Google Books API による自動あらすじ・作者検索 ---
-        const fetchBookInfoFromApi = async (title, authorHint = '') => {
-          try {
-            const query = encodeURIComponent(`${title} ${authorHint}`.trim());
-            const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&langRestrict=ja`);
-            const data = await res.json();
-
-            if (data.items && data.items.length > 0) {
-              const info = data.items[0].volumeInfo;
-              const fetchedAuthor = info.authors ? info.authors.join(', ') : '';
-              let rawDesc = info.description || '';
-              
-              // 一行程度の簡潔な文章に要約（100文字以内で切る）
-              let cleanedDesc = rawDesc.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-              if (cleanedDesc.length > 90) {
-                cleanedDesc = cleanedDesc.substring(0, 87) + '...';
-              }
-              if (!cleanedDesc) {
-                cleanedDesc = '概要情報なし。';
-              }
-
-              return {
-                author: fetchedAuthor,
-                synopsis: cleanedDesc
-              };
-            }
-          } catch (err) {
-            console.error('API Error:', err);
-          }
-          return { author: '', synopsis: 'あらすじ情報を自動取得できませんでした。' };
-        };
-
-        // --- モーダル制御 ＆ 手動追加 ---
-        const openAddModal = () => {
-          newBookForm.value = { category: CATEGORIES[0], title: '', author: '', synopsis: '', memo: '' };
-          modalConfirmMode.value = false;
-          showAddModal.value = true;
-          refreshIcons();
-        };
-
-        const closeAddModal = () => {
-          showAddModal.value = false;
-        };
-
-        const searchBookDetails = async () => {
-          if (!newBookForm.value.title) return;
-          isSearching.value = true;
-          
-          const result = await fetchBookInfoFromApi(newBookForm.value.title, newBookForm.value.author);
-          
-          if (!newBookForm.value.author && result.author) {
-            newBookForm.value.author = result.author;
-          }
-          newBookForm.value.synopsis = result.synopsis;
-
-          isSearching.value = false;
-          modalConfirmMode.value = true;
-          refreshIcons();
-        };
-
-        const confirmAddBook = () => {
-          books.value.push({
-            id: Date.now(),
-            ...newBookForm.value
-          });
-          saveBooks();
-          closeAddModal();
-          refreshIcons();
-        };
-
-        const deleteBook = (id) => {
-          if (confirm('この本を削除してもよろしいですか？')) {
-            books.value = books.value.filter(b => b.id !== id);
-            saveBooks();
-          }
-        };
-
-        // --- Word (.docx) ファイルのインポート・解析機能 ---
-        const importWordFile = async (event) => {
-          const file = event.target.files[0];
-          if (!file) return;
-
-          isLoading.value = true;
-          loadingMessage.value = 'Wordファイルを読み込み・解析中...';
-
-          try {
-            const arrayBuffer = await file.arrayBuffer();
-            const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-            const text = result.value;
-
-            // テキストを行ごとに分割して書籍名を取り出す処理
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            
-            loadingMessage.value = `検出した作品（${lines.length}件）のあらすじ情報を自動取得中...`;
-
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
-              // タイトルと作者の簡易分離 (「作品名 / 作者」などの表記にも対応)
-              let title = line;
-              let author = '';
-              if (line.includes(' / ')) {
-                const parts = line.split(' / ');
-                title = parts[0];
-                author = parts[1];
-              } else if (line.includes('　')) {
-                const parts = line.split('　');
-                title = parts[0];
-                author = parts[1] || '';
-              }
-
-              // Google Books API からあらすじ取得
-              const info = await fetchBookInfoFromApi(title, author);
-
-              books.value.push({
-                id: Date.now() + i,
-                category: "その他", // 初期取り込み時は「その他」に割り当て
-                title: title,
-                author: author || info.author || '不明',
-                synopsis: info.synopsis,
-                memo: ''
-              });
-
-              // API負荷軽減の微小ウェイティング
-              await new Promise(r => setTimeout(r, 200));
-            }
-
-            saveBooks();
-            alert('Wordファイルからの取り込みとあらすじの追加が完了しました！');
-          } catch (error) {
-            console.error(error);
-            alert('Wordファイルの読み込みに失敗しました。.docx 形式であることをご確認ください。');
-          } finally {
-            isLoading.value = false;
-            event.target.value = '';
-            refreshIcons();
-          }
-        };
-
-        return {
-          CATEGORIES,
-          books,
-          searchQuery,
-          selectedCategoryFilter,
-          isLoading,
-          loadingMessage,
-          filteredCategories,
-          getBooksByCategory,
-          getCategoryCount,
-          showAddModal,
-          modalConfirmMode,
-          isSearching,
-          newBookForm,
-          openAddModal,
-          closeAddModal,
-          searchBookDetails,
-          confirmAddBook,
-          deleteBook,
-          saveBooks,
-          importWordFile
-        };
+      if (cat === 'all') {
+        renderBookshelf();
+      } else {
+        renderBookshelf(cat);
       }
-    }).mount('#app');
+    }
+
+    // 本棚の描画（コンパクトカード配置）
+    function renderBookshelf(filterCategory = null, searchQuery = '') {
+      const container = document.getElementById('bookshelfContainer');
+      container.innerHTML = '';
+
+      const query = searchQuery.trim().toLowerCase();
+
+      CATEGORIES.forEach(cat => {
+        if (filterCategory && filterCategory !== cat) return;
+
+        // カテゴリ内の本を抽出
+        let catBooks = books.filter(b => b.category === cat);
+
+        // 検索クエリ適用
+        if (query) {
+          catBooks = catBooks.filter(b => 
+            b.title.toLowerCase().includes(query) || 
+            b.author.toLowerCase().includes(query)
+          );
+        }
+
+        if (catBooks.length === 0 && query) return;
+
+        // セクション要素の構築
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        section.id = `cat-${cat}`;
+
+        section.innerHTML = `
+          <h2 class="category-title">
+            ${cat} 
+            <span class="book-count">(${catBooks.length}冊)</span>
+          </h2>
+          <div class="bookshelf-grid" id="grid-${cat}"></div>
+        `;
+
+        container.appendChild(section);
+
+        const grid = section.querySelector(`#grid-${cat}`);
+        catBooks.forEach(book => {
+          const card = document.createElement('div');
+          card.className = 'book-card';
+          card.innerHTML = `
+            <div>
+              <div class="book-header">
+                <div class="book-title" title="${book.title}">${book.title}</div>
+                <div class="book-author">${book.author}</div>
+              </div>
+              <div class="book-synopsis" title="${book.synopsis}">${book.synopsis || 'あらすじ未設定'}</div>
+            </div>
+            <div class="book-memo-container">
+              <textarea class="book-memo" placeholder="メモを入力..." onchange="updateMemo(${book.id}, this.value)">${book.memo || ''}</textarea>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    // メモのリアルタイム更新
+    function updateMemo(id, text) {
+      const book = books.find(b => b.id === id);
+      if (book) {
+        book.memo = text;
+        saveData();
+      }
+    }
+
+    // 本棚内検索（タイトル・作者）
+    function filterBooks() {
+      const query = document.getElementById('searchInput').value;
+      renderBookshelf(null, query);
+    }
+
+    // ------------------------------------
+    // モーダル & 新規追加 (Google Books API自動検索)
+    // ------------------------------------
+    function openAddModal() {
+      document.getElementById('addModal').classList.add('active');
+      document.getElementById('stepSearch').style.display = 'block';
+      document.getElementById('stepConfirm').style.display = 'none';
+      document.getElementById('modalHeading').textContent = '新しい本を検索・追加';
+      document.getElementById('newTitle').value = '';
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('active');
+    }
+
+    function backToSearch() {
+      document.getElementById('stepSearch').style.display = 'block';
+      document.getElementById('stepConfirm').style.display = 'none';
+    }
+
+    // Google Books APIによる正確な情報検索
+    async function searchBookInfo() {
+      const title = document.getElementById('newTitle').value.trim();
+      if (!title) {
+        alert('作品名を入力してください');
+        return;
+      }
+
+      const loader = document.getElementById('searchLoader');
+      loader.classList.add('active');
+
+      try {
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(title)}&hl=ja`);
+        const data = await response.json();
+
+        loader.classList.remove('active');
+
+        let author = '不詳';
+        let synopsis = 'あらすじが見つかりませんでした。';
+
+        if (data.items && data.items.length > 0) {
+          const info = data.items[0].volumeInfo;
+          if (info.authors) author = info.authors.join(', ');
+          if (info.description) synopsis = info.description.substring(0, 100) + '...';
+        }
+
+        // STEP 2 へ移行し確認画面を表示
+        document.getElementById('confirmAuthor').value = author;
+        document.getElementById('confirmSynopsis').value = synopsis;
+        document.getElementById('confirmMemo').value = '';
+
+        document.getElementById('stepSearch').style.display = 'none';
+        document.getElementById('stepConfirm').style.display = 'block';
+        document.getElementById('modalHeading').textContent = '検索結果の確認・編集';
+
+      } catch (error) {
+        loader.classList.remove('active');
+        alert('情報の検索に失敗しました。手動で入力してください。');
+        document.getElementById('confirmAuthor').value = '';
+        document.getElementById('confirmSynopsis').value = '';
+        document.getElementById('stepSearch').style.display = 'none';
+        document.getElementById('stepConfirm').style.display = 'block';
+      }
+    }
+
+    // 新規作品の登録
+    function saveNewBook() {
+      const category = document.getElementById('newCategory').value;
+      const title = document.getElementById('newTitle').value.trim();
+      const author = document.getElementById('confirmAuthor').value.trim() || '不詳';
+      const synopsis = document.getElementById('confirmSynopsis').value.trim();
+      const memo = document.getElementById('confirmMemo').value.trim();
+
+      const newBook = {
+        id: Date.now(),
+        category,
+        title,
+        author,
+        synopsis,
+        memo
+      };
+
+      books.push(newBook);
+      saveData();
+      renderBookshelf();
+      closeAddModal();
+    }
   </script>
 </body>
 </html>
