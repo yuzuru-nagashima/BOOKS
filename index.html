@@ -231,6 +231,12 @@
     outline:none;
   }
   .book-detail textarea:focus{border-color:var(--gold);}
+  .book-detail select{
+    font-family:var(--gothic); font-size:13px; color:var(--ink);
+    border:1px solid var(--line); border-radius:5px; padding:7px 8px;
+    background:var(--white); outline:none; max-width:220px;
+  }
+  .book-detail select:focus{border-color:var(--gold);}
   .book-detail .memo-actions{display:flex; justify-content:flex-end; gap:6px; margin-top:4px;}
   .book-detail .del-row{display:flex; justify-content:flex-end; margin-top:6px;}
   .del-link{
@@ -350,6 +356,10 @@
               <div class="field" style="margin-bottom:8px;">
                 <label>著者</label>
                 <input type="text" id="resultAuthor">
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label>出版年（任意・本棚内の並び順に使用）</label>
+                <input type="text" id="resultYear" placeholder="例：2013" inputmode="numeric">
               </div>
             </div>
           </div>
@@ -678,6 +688,47 @@ function matchesSearch(b){
   return b.title.toLowerCase().includes(t) || b.author.toLowerCase().includes(t);
 }
 
+// カテゴリ内の並び順：
+// ・同じ著者の本は必ず連続させる
+// ・著者グループ同士は「そのグループ内でわかっている出版年の最小値」でおおまかに時系列順
+// ・出版年が不明な本（主に元データ）は末尾側に寄せつつ、もとの登録順を保つ
+function sortCategoryList(list){
+  const origIndex = new Map();
+  list.forEach((b,i)=>origIndex.set(b.id, i));
+
+  const authorMinYear = new Map();
+  const authorFirstIndex = new Map();
+  list.forEach(b=>{
+    const key = (b.author || "").trim();
+    const y = (typeof b.year === "number" && !isNaN(b.year)) ? b.year : null;
+    if(y !== null){
+      const cur = authorMinYear.get(key);
+      if(cur === undefined || y < cur) authorMinYear.set(key, y);
+    }
+    if(!authorFirstIndex.has(key)) authorFirstIndex.set(key, origIndex.get(b.id));
+  });
+
+  const YEAR_UNKNOWN = Infinity;
+
+  return [...list].sort((a,b)=>{
+    const keyA = (a.author || "").trim();
+    const keyB = (b.author || "").trim();
+
+    if(keyA !== keyB){
+      const ra = authorMinYear.has(keyA) ? authorMinYear.get(keyA) : YEAR_UNKNOWN;
+      const rb = authorMinYear.has(keyB) ? authorMinYear.get(keyB) : YEAR_UNKNOWN;
+      if(ra !== rb) return ra - rb;
+      return authorFirstIndex.get(keyA) - authorFirstIndex.get(keyB);
+    }
+
+    // 同一著者：年でソート、同年・不明ならもとの順序を維持
+    const ya = (typeof a.year === "number" && !isNaN(a.year)) ? a.year : YEAR_UNKNOWN;
+    const yb = (typeof b.year === "number" && !isNaN(b.year)) ? b.year : YEAR_UNKNOWN;
+    if(ya !== yb) return ya - yb;
+    return origIndex.get(a.id) - origIndex.get(b.id);
+  });
+}
+
 function render(){
   renderCatNav();
   totalCountEl.textContent = `全 ${books.length} 冊`;
@@ -687,8 +738,9 @@ function render(){
   let anyVisible = false;
 
   cats.forEach(cat=>{
-    const list = books.filter(b => b.category === cat && matchesSearch(b));
-    if(searchTerm && list.length === 0) return; // hide empty category during search
+    const rawList = books.filter(b => b.category === cat && matchesSearch(b));
+    if(searchTerm && rawList.length === 0) return; // hide empty category during search
+    const list = sortCategoryList(rawList);
     anyVisible = true;
     const isCollapsed = collapsedCats.has(cat);
     html += `<section class="category-section ${isCollapsed?'collapsed':''}" data-cat="${cat}">
@@ -714,10 +766,17 @@ function render(){
             <div class="caret"></div>
           </div>`;
         if(isOpen){
+          const catOptions = CATEGORY_ORDER.map(c=>
+            `<option value="${c}" ${c===b.category?'selected':''}>${c}</option>`
+          ).join("");
           html += `<div class="book-detail">
               <div class="row">
                 <label>あらすじ</label>
                 <div class="synopsis-text">${escapeHtml(b.synopsis||"（未登録）")}</div>
+              </div>
+              <div class="row">
+                <label>カテゴリ</label>
+                <select data-category-id="${b.id}">${catOptions}</select>
               </div>
               <div class="row">
                 <label>メモ</label>
@@ -763,6 +822,21 @@ function bindShelfEvents(){
       const id = el.dataset.id;
       openBookId = (openBookId === id) ? null : id;
       render();
+    });
+  });
+  shelfEl.querySelectorAll("select[data-category-id]").forEach(sel=>{
+    sel.addEventListener("click", e=>e.stopPropagation());
+    sel.addEventListener("change", (e)=>{
+      const id = sel.dataset.categoryId;
+      const book = books.find(b=>b.id===id);
+      if(book){
+        book.category = sel.value;
+        saveBooks(books);
+        activeCategory = (activeCategory === "ALL") ? "ALL" : sel.value;
+        collapsedCats.delete(sel.value);
+        openBookId = id;
+        render();
+      }
     });
   });
   shelfEl.querySelectorAll("[data-save-memo]").forEach(el=>{
@@ -816,6 +890,7 @@ const searchBookBtn = document.getElementById("searchBookBtn");
 const searchStatus = document.getElementById("searchStatus");
 const searchResultArea = document.getElementById("searchResultArea");
 const resultAuthor = document.getElementById("resultAuthor");
+const resultYear = document.getElementById("resultYear");
 const resultSynopsis = document.getElementById("resultSynopsis");
 const resultCover = document.getElementById("resultCover");
 const newMemo = document.getElementById("newMemo");
@@ -829,6 +904,7 @@ overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeModal(); 
 function openModal(){
   newTitleInput.value = "";
   newMemo.value = "";
+  resultYear.value = "";
   searchStatus.textContent = "";
   searchResultArea.style.display = "none";
   confirmAddBtn.disabled = true;
@@ -894,6 +970,7 @@ async function searchBook(){
     console.error(err);
     searchStatus.textContent = "検索に失敗しました（通信環境をご確認ください）。手動で入力できます。";
     resultAuthor.value = "";
+    resultYear.value = "";
     resultSynopsis.value = "";
     searchResultArea.style.display = "block";
     confirmAddBtn.disabled = false;
@@ -912,6 +989,7 @@ async function searchBook(){
   if(!item){
     searchStatus.textContent = "該当する本が見つかりませんでした。お手数ですが著者・あらすじを直接入力してください。";
     resultAuthor.value = "";
+    resultYear.value = "";
     resultSynopsis.value = "";
     resultCover.src = "";
     resultCover.style.display = "none";
@@ -922,6 +1000,8 @@ async function searchBook(){
 
   const info = item.volumeInfo || {};
   resultAuthor.value = (info.authors || []).join("、") || "";
+  const yearMatch = (info.publishedDate || "").match(/\d{4}/);
+  resultYear.value = yearMatch ? yearMatch[0] : "";
   resultSynopsis.value = (info.description || "").replace(/<[^>]+>/g,"").slice(0, 300);
   if(info.imageLinks && info.imageLinks.thumbnail){
     resultCover.src = info.imageLinks.thumbnail.replace("http://","https://");
@@ -974,11 +1054,13 @@ function pickBestMatch(items, query){
 confirmAddBtn.addEventListener("click", ()=>{
   const title = newTitleInput.value.trim();
   if(!title) return;
+  const yearNum = parseInt(resultYear.value.trim(), 10);
   const newBook = {
     id: "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,7),
     category: newCategorySelect.value,
     title: title,
     author: resultAuthor.value.trim(),
+    year: Number.isFinite(yearNum) ? yearNum : null,
     synopsis: resultSynopsis.value.trim(),
     memo: newMemo.value.trim()
   };
